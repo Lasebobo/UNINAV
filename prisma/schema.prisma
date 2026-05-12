@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Location {
+  id          String   @id
+  name        String
+  aliases     String[]
+  type        String
+  description String
+  coordsX     Float
+  coordsY     Float
+  lat         Float?
+  lng         Float?
+  imageUrl    String?
+
+  // Relations
+  routesFrom Route[] @relation("RoutesFrom")
+  routesTo   Route[] @relation("RoutesTo")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Route {
+  id               String  @id @default(uuid())
+  fromId           String
+  toId             String
+  distance         String
+  timeWalking      String
+  shuttleAvailable Boolean
+  shuttleFare      String?
+  description      String
+
+  // Relations
+  from Location @relation("RoutesFrom", fields: [fromId], references: [id])
+  to   Location @relation("RoutesTo", fields: [toId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GeneralInfo {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

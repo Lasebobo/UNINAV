@@ -1,0 +1,8 @@
+{
+  "name": "UniNav - Campus RAG Chatbot",
+  "description": "A multimodal RAG prototype for university campus navigation, featuring text/voice interaction and transparent context retrieval.",
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation"
+  ]
+}

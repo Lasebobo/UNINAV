@@ -1,0 +1,403 @@
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { CampusLocation } from '../types';
+import { Clock, Navigation, MapPin, X, Layers, Map as MapIcon } from 'lucide-react';
+import { ImageModal } from './ImageModal';
+import { fetchGoogleRoute, LatLng } from '../services/routeService';
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix Leaflet default icon path issue in bundlers
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+// Programmatically pan/zoom the map when activeDestination changes
+const MapController: React.FC<{
+  destination?: CampusLocation | null;
+  userLocation?: { lat: number; lng: number };
+}> = ({ destination, userLocation }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (destination?.lat && destination?.lng) {
+      map.setView([destination.lat, destination.lng], 17, { animate: true });
+    } else if (userLocation) {
+      map.setView([userLocation.lat, userLocation.lng], 16, { animate: true });
+    }
+  }, [destination, userLocation]);
+  return null;
+};
+
+interface CampusMapProps {
+  locations: CampusLocation[];
+  onLocationSelect: (loc: CampusLocation | null) => void;
+  onGetDirections: (loc: CampusLocation) => void;
+  userLocation?: { lat: number; lng: number };
+  activeDestination?: CampusLocation | null;
+  isSidebarOpen?: boolean;
+  onCloseSidebar?: () => void;
+  onOpenSidebar?: () => void;
+}
+
+export const CampusMap: React.FC<CampusMapProps> = ({
+  locations,
+  onLocationSelect,
+  onGetDirections,
+  userLocation,
+  activeDestination,
+  isSidebarOpen,
+  onCloseSidebar,
+  onOpenSidebar,
+}) => {
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'schematic' | 'google'>('schematic');
+  const [routePolyline, setRoutePolyline] = useState<LatLng[] | null>(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+  const routeFetchId = useRef(0);
+
+  const CAMPUS_CENTRE: LatLng = { lat: 7.5197, lng: 4.5190 };
+
+  const typeConfig: Record<string, { color: string; label: string }> = {
+    academic:    { color: '#3b82f6', label: 'Building' },
+    facility:    { color: '#22c55e', label: 'Facility' },
+    transport:   { color: '#f97316', label: 'Landmark' },
+    residential: { color: '#a855f7', label: 'Department' },
+    custom:      { color: '#f97316', label: 'Landmark' },
+  };
+  const getPinStyle = (type: string) => typeConfig[type] || { color: '#3b82f6', label: 'Building' };
+
+  // Build custom Leaflet DivIcon for each pin
+  const makeIcon = (color: string, isActive: boolean) =>
+    L.divIcon({
+      html: `<div style="
+        width:${isActive ? 34 : 26}px;
+        height:${isActive ? 34 : 26}px;
+        background:${color};
+        border-radius:50%;
+        border:2.5px solid white;
+        box-shadow:${isActive ? `0 0 0 6px ${color}33,` : ''}0 2px 8px rgba(0,0,0,0.28);
+        display:flex;align-items:center;justify-content:center;
+        cursor:pointer;
+      ">
+        <svg width="${isActive ? 16 : 12}" height="${isActive ? 16 : 12}" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3" fill="${color}"/>
+        </svg>
+      </div>`,
+      className: '',
+      iconSize: [isActive ? 34 : 26, isActive ? 34 : 26],
+      iconAnchor: [isActive ? 17 : 13, isActive ? 34 : 26],
+      popupAnchor: [0, -(isActive ? 34 : 26)],
+    });
+
+  // User location dot icon
+  const userIcon = L.divIcon({
+    html: `<div style="width:20px;height:20px;background:#2563eb;border-radius:50%;border:3px solid white;box-shadow:0 0 0 4px rgba(37,99,235,0.25),0 2px 6px rgba(0,0,0,0.3)"></div>`,
+    className: '',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
+
+  // Google Maps embed URL (satellite / directions mode)
+  const googleMapSrc = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const apiKey = (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+    if (!apiKey) return '';
+    const base = 'https://www.google.com/maps/embed/v1';
+    if (activeDestination?.lat && activeDestination?.lng) {
+      const origin = userLocation
+        ? `${userLocation.lat},${userLocation.lng}`
+        : 'Obafemi+Awolowo+University,Ile-Ife';
+      const dest = `${activeDestination.lat},${activeDestination.lng}`;
+      return `${base}/directions?origin=${origin}&destination=${dest}&mode=walking&maptype=roadmap&key=${apiKey}`;
+    }
+    return `${base}/place?q=Obafemi+Awolowo+University,Ile-Ife&maptype=roadmap&zoom=15&key=${apiKey}`;
+  }, [viewMode, userLocation, activeDestination]);
+
+  // Fetch route from Google Directions via server proxy
+  useEffect(() => {
+    if (!activeDestination) { setRoutePolyline(null); return; }
+    const destLat = activeDestination.lat;
+    const destLng = activeDestination.lng;
+    if (!destLat || !destLng) { setRoutePolyline(null); return; }
+
+    const origin: LatLng = userLocation
+      ? { lat: userLocation.lat, lng: userLocation.lng }
+      : CAMPUS_CENTRE;
+
+    const fetchId = ++routeFetchId.current;
+    setRouteLoading(true);
+    setRoutePolyline(null);
+
+    fetchGoogleRoute(origin, { lat: destLat, lng: destLng }).then((pts) => {
+      if (fetchId !== routeFetchId.current) return;
+      setRoutePolyline(pts);
+      setRouteLoading(false);
+    });
+  }, [userLocation, activeDestination]);
+
+  const filteredLocations = useMemo(() => {
+    if (!searchQuery.trim()) return locations;
+    return locations.filter((loc) =>
+      loc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      loc.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [locations, searchQuery]);
+
+  return (
+    <div className="flex h-full w-full bg-[#f8fafc] overflow-hidden">
+
+      {/* Left Column: Map */}
+      <div className="flex-1 md:p-4 md:pr-2 flex flex-col relative min-w-0">
+        <div className="flex-1 bg-white md:rounded-xl shadow-sm border-0 md:border md:border-gray-200 overflow-hidden relative">
+
+          {/* Leaflet Map */}
+          {viewMode === 'schematic' ? (
+            <MapContainer
+              center={[CAMPUS_CENTRE.lat, CAMPUS_CENTRE.lng]}
+              zoom={15}
+              style={{ width: '100%', height: '100%' }}
+              zoomControl={false}
+              attributionControl={false}
+            >
+              {/* CartoDB Positron — clean light-mode map like the reference image */}
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              />
+
+              {/* Route Polyline from Google Directions */}
+              {routePolyline && routePolyline.length >= 2 && (
+                <>
+                  <Polyline
+                    positions={routePolyline.map((p) => [p.lat, p.lng] as [number, number])}
+                    color="#1d4ed8"
+                    weight={8}
+                    opacity={0.12}
+                  />
+                  <Polyline
+                    positions={routePolyline.map((p) => [p.lat, p.lng] as [number, number])}
+                    color="#3b82f6"
+                    weight={5}
+                    opacity={0.9}
+                  />
+                </>
+              )}
+
+              {/* User location dot */}
+              {userLocation && (
+                <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} />
+              )}
+
+              {/* Campus location markers */}
+              {locations.map((loc) => {
+                if (!loc.lat || !loc.lng) return null;
+                const isActive = activeDestination?.id === loc.id;
+                const style = getPinStyle(loc.type);
+                return (
+                  <Marker
+                    key={loc.id}
+                    position={[loc.lat, loc.lng]}
+                    icon={makeIcon(style.color, isActive)}
+                    eventHandlers={{ click: () => onLocationSelect(loc) }}
+                  />
+                );
+              })}
+
+              <MapController destination={activeDestination} userLocation={userLocation} />
+            </MapContainer>
+          ) : (
+            <iframe
+              src={googleMapSrc}
+              className="w-full h-full border-0 absolute inset-0"
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          )}
+
+          {/* Satellite / Map Toggle */}
+          <div className="absolute top-4 left-4 md:top-6 md:left-6 z-[500]">
+            <button
+              onClick={() => setViewMode(viewMode === 'schematic' ? 'google' : 'schematic')}
+              className="bg-white p-3 md:px-3 md:py-2.5 rounded-2xl md:rounded-xl shadow-lg border border-gray-100 flex flex-col items-center justify-center text-gray-700 hover:bg-gray-50 hover:shadow-xl transition-all md:min-w-[76px] min-w-[46px] min-h-[46px]"
+            >
+              {viewMode === 'schematic' ? (
+                <>
+                  <Layers size={20} className="md:mb-1 text-gray-800" strokeWidth={2.5} />
+                  <span className="hidden md:inline text-[11px] font-bold text-gray-700">Satellite</span>
+                </>
+              ) : (
+                <>
+                  <MapIcon size={20} className="md:mb-1 text-gray-800" strokeWidth={2.5} />
+                  <span className="hidden md:inline text-[11px] font-bold text-gray-700">Map</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Compass */}
+          {viewMode === 'schematic' && (
+            <div className="absolute top-4 right-4 md:top-6 md:right-6 w-[46px] h-[46px] bg-white rounded-full shadow-lg border border-gray-100 flex flex-col items-center justify-center text-blue-600 font-bold text-xs pointer-events-none z-[400]">
+              <span>N</span>
+              <div className="w-0.5 h-2.5 bg-blue-600 mt-0.5 rounded-full"></div>
+            </div>
+          )}
+
+          {/* Legend */}
+          {viewMode === 'schematic' && (
+            <div className="hidden md:block absolute bottom-6 left-6 bg-white p-3.5 rounded-xl shadow-md border border-gray-100 min-w-[120px] z-[400]">
+              <h4 className="text-xs font-semibold text-gray-700 mb-2.5">Legend</h4>
+              <div className="flex flex-col gap-2">
+                {Array.from(new Set(Object.values(typeConfig).map((t) => JSON.stringify(t)))).map((tStr, idx) => {
+                  const tc = JSON.parse(tStr);
+                  return (
+                    <div key={idx} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tc.color }}></div>
+                      <span className="text-[11px] text-gray-600 font-medium">{tc.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Mobile floating pill for active destination */}
+          {activeDestination && (
+            <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-[500] w-[85%] max-w-[320px]">
+              <button
+                onClick={() => onOpenSidebar?.()}
+                className="w-full bg-[#1c5fdf] hover:bg-blue-700 shadow-xl rounded-full px-5 py-4 flex items-center justify-between gap-3 text-white transition-transform active:scale-95 border border-blue-400"
+              >
+                <div className="shrink-0 flex items-center justify-center w-5 h-5 rounded-full border border-white/50 text-[10px] font-mono">i</div>
+                <div className="flex-1 text-center font-medium text-[15px] leading-tight text-white px-2">{activeDestination.name}</div>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right Column: Sidebar */}
+      <div className={`
+        fixed inset-0 z-50 bg-[#f8fafc] transform transition-transform duration-300
+        md:relative md:inset-auto md:w-[380px] md:translate-x-0 md:bg-[#f8fafc] md:border-l md:border-gray-100 flex flex-col shrink-0 h-full overflow-hidden
+        ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}
+      `}>
+        {/* Mobile Sidebar Header */}
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-100 shrink-0 bg-white shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900">Locations</h2>
+          <button onClick={onCloseSidebar} className="p-2 text-gray-500 hover:text-gray-700">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Search Bar */}
+        <div className="p-4 md:pt-6 shrink-0 bg-white md:bg-transparent">
+          <div className="bg-white border border-gray-200 rounded-lg flex items-center px-4 py-2.5 shadow-sm focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400 transition-all">
+            <input
+              type="text"
+              placeholder="Search locations..."
+              className="w-full bg-transparent border-none outline-none text-sm text-gray-700 placeholder-gray-400"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 pb-6">
+          {/* Selected Card */}
+          {activeDestination && (
+            <div className="bg-[#f0f5fc] rounded-xl mb-6 relative border border-transparent shadow-sm overflow-hidden flex flex-col p-5">
+              <button
+                onClick={() => onLocationSelect(null)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
+              >
+                <X size={16} />
+              </button>
+
+              {activeDestination.imageUrl && (
+                <div
+                  className="h-36 w-full rounded-lg overflow-hidden mb-4 cursor-pointer relative"
+                  onClick={() => setFullscreenImage(activeDestination.imageUrl!)}
+                >
+                  <img src={activeDestination.imageUrl} alt={activeDestination.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 mb-2">
+                <div
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: getPinStyle(activeDestination.type).color }}
+                />
+                <h3 className="text-[15px] font-bold text-gray-900 leading-tight">{activeDestination.name}</h3>
+              </div>
+              <p className="text-[12px] text-gray-500 leading-snug mb-4">{activeDestination.description}</p>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onGetDirections(activeDestination)}
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold py-2.5 px-3 rounded-lg transition-colors"
+                >
+                  <Navigation size={13} />
+                  Directions
+                </button>
+              </div>
+
+              {routeLoading && (
+                <p className="text-[11px] text-blue-500 mt-2 text-center animate-pulse">Finding road path…</p>
+              )}
+              {routePolyline && !routeLoading && (
+                <p className="text-[11px] text-green-600 mt-2 text-center">✓ Road route loaded</p>
+              )}
+            </div>
+          )}
+
+          {/* Locations List */}
+          {!activeDestination && (
+            <div className="mb-4">
+              <p className="text-xs text-gray-400 font-medium mb-3">
+                {searchQuery ? `Results for "${searchQuery}"` : `All Locations (${filteredLocations.length})`}
+              </p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2">
+            {filteredLocations.map((loc) => {
+              const isActive = activeDestination?.id === loc.id;
+              const style = getPinStyle(loc.type);
+              return (
+                <button
+                  key={loc.id}
+                  onClick={() => onLocationSelect(loc)}
+                  className={`w-full text-left px-4 py-3.5 rounded-xl border transition-all ${
+                    isActive
+                      ? 'bg-blue-50 border-blue-200 shadow-sm'
+                      : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: style.color }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-gray-900 truncate">{loc.name}</p>
+                      <p className="text-[11px] text-gray-400 truncate mt-0.5">{loc.description}</p>
+                    </div>
+                    {isActive && <MapPin size={14} className="text-blue-500 shrink-0" />}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {fullscreenImage && (
+        <ImageModal imageUrl={fullscreenImage} onClose={() => setFullscreenImage(null)} />
+      )}
+    </div>
+  );
+};
