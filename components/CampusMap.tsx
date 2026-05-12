@@ -399,7 +399,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
 
       {/* Right Column: Sidebar */}
       <div className={`
-        fixed inset-0 z-50 bg-[#f8fafc] transform transition-transform duration-300
+        fixed inset-0 z-[1000] bg-[#f8fafc] transform transition-transform duration-300
         md:relative md:inset-auto md:w-[380px] md:translate-x-0 md:bg-[#f8fafc] md:border-l md:border-gray-100 flex flex-col shrink-0 h-full overflow-hidden
         ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}
       `}>
