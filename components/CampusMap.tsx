@@ -3,7 +3,7 @@ import { CampusLocation } from '../types';
 import { Clock, Navigation, MapPin, X, Layers, Map as MapIcon } from 'lucide-react';
 import { ImageModal } from './ImageModal';
 import { fetchGoogleRoute, LatLng } from '../services/routeService';
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -70,29 +70,52 @@ export const CampusMap: React.FC<CampusMapProps> = ({
   };
   const getPinStyle = (type: string) => typeConfig[type] || { color: '#3b82f6', label: 'Building' };
 
-  // Build custom Leaflet DivIcon for each pin
-  const makeIcon = (color: string, isActive: boolean) =>
-    L.divIcon({
-      html: `<div style="
-        width:${isActive ? 34 : 26}px;
-        height:${isActive ? 34 : 26}px;
-        background:${color};
-        border-radius:50%;
-        border:2.5px solid white;
-        box-shadow:${isActive ? `0 0 0 6px ${color}33,` : ''}0 2px 8px rgba(0,0,0,0.28);
-        display:flex;align-items:center;justify-content:center;
-        cursor:pointer;
-      ">
-        <svg width="${isActive ? 16 : 12}" height="${isActive ? 16 : 12}" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-          <circle cx="12" cy="10" r="3" fill="${color}"/>
-        </svg>
-      </div>`,
+  // Build custom Leaflet DivIcon — pin circle + label text below
+  const makeIcon = (color: string, isActive: boolean, name: string) => {
+    const size = isActive ? 34 : 26;
+    const svgSize = isActive ? 16 : 12;
+    return L.divIcon({
+      html: `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div style="
+            width:${size}px;height:${size}px;
+            background:${color};
+            border-radius:50%;
+            border:2.5px solid white;
+            box-shadow:${isActive ? `0 0 0 6px ${color}33,` : ''}0 2px 8px rgba(0,0,0,0.28);
+            display:flex;align-items:center;justify-content:center;
+            cursor:pointer;
+          ">
+            <svg width="${svgSize}" height="${svgSize}" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3" fill="${color}"/>
+            </svg>
+          </div>
+          <div style="
+            background:${isActive ? color : 'rgba(255,255,255,0.95)'};
+            color:${isActive ? '#fff' : '#1e293b'};
+            font-size:10px;
+            font-weight:${isActive ? 700 : 600};
+            font-family:system-ui,sans-serif;
+            padding:2px 6px;
+            border-radius:10px;
+            white-space:nowrap;
+            max-width:120px;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            box-shadow:0 1px 4px rgba(0,0,0,0.18);
+            border:1px solid ${isActive ? color : 'rgba(0,0,0,0.08)'};
+            pointer-events:none;
+          ">${name}</div>
+        </div>`,
       className: '',
-      iconSize: [isActive ? 34 : 26, isActive ? 34 : 26],
-      iconAnchor: [isActive ? 17 : 13, isActive ? 34 : 26],
-      popupAnchor: [0, -(isActive ? 34 : 26)],
+      // iconSize covers the whole wrapper including label (~40px tall for label)
+      iconSize: [140, size + 24],
+      // anchor at horizontal center of the pin circle, bottom of the circle
+      iconAnchor: [70, size],
+      popupAnchor: [0, -size],
     });
+  };
 
   // User location dot icon
   const userIcon = L.divIcon({
@@ -202,9 +225,94 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                   <Marker
                     key={loc.id}
                     position={[loc.lat, loc.lng]}
-                    icon={makeIcon(style.color, isActive)}
+                    icon={makeIcon(style.color, isActive, loc.name)}
                     eventHandlers={{ click: () => onLocationSelect(loc) }}
-                  />
+                  >
+                    {/* Hover tooltip */}
+                    <Tooltip
+                      direction="top"
+                      offset={[0, -36]}
+                      opacity={1}
+                      className="uninav-tooltip"
+                    >
+                      <div style={{ width: '220px', overflow: 'hidden' }}>
+                        {/* Image banner */}
+                        {loc.imageUrl && (
+                          <div style={{
+                            width: '100%',
+                            height: '110px',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            borderRadius: '12px 12px 0 0',
+                          }}>
+                            <img
+                              src={loc.imageUrl}
+                              alt={loc.name}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                display: 'block',
+                              }}
+                            />
+                            {/* Gradient scrim so text below has depth */}
+                            <div style={{
+                              position: 'absolute',
+                              inset: 0,
+                              background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.35) 100%)',
+                            }} />
+                          </div>
+                        )}
+
+                        {/* Text body */}
+                        <div style={{ padding: '8px 10px 10px' }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            marginBottom: '4px',
+                          }}>
+                            <div style={{
+                              width: '8px', height: '8px',
+                              borderRadius: '50%',
+                              backgroundColor: style.color,
+                              flexShrink: 0,
+                            }} />
+                            <span style={{
+                              fontWeight: 700,
+                              fontSize: '12px',
+                              color: '#0f172a',
+                              lineHeight: 1.2,
+                            }}>{loc.name}</span>
+                          </div>
+                          <div style={{
+                            display: 'inline-block',
+                            background: style.color + '22',
+                            color: style.color,
+                            fontSize: '9px',
+                            fontWeight: 700,
+                            padding: '1px 6px',
+                            borderRadius: '8px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                            marginBottom: '5px',
+                          }}>{style.label}</div>
+                          {loc.description && (
+                            <p style={{
+                              fontSize: '11px',
+                              color: '#475569',
+                              margin: 0,
+                              lineHeight: 1.4,
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                            } as React.CSSProperties}>{loc.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    </Tooltip>
+                  </Marker>
                 );
               })}
 

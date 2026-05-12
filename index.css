@@ -20,3 +20,35 @@
     }
   }
 }
+
+/* ── UniNav Leaflet Tooltip Override ─────────────────────────── */
+.uninav-tooltip.leaflet-tooltip {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0,0,0,0.06);
+  padding: 0;
+  color: inherit;
+  white-space: normal;
+  pointer-events: none;
+  font-family: system-ui, -apple-system, sans-serif;
+  animation: tooltip-fade 0.15s ease;
+}
+
+/* Remove the default arrow */
+.uninav-tooltip.leaflet-tooltip::before {
+  display: none;
+}
+
+/* Remove the generic Leaflet tooltip arrow that appears on all sides */
+.uninav-tooltip.leaflet-tooltip-top::before,
+.uninav-tooltip.leaflet-tooltip-bottom::before,
+.uninav-tooltip.leaflet-tooltip-left::before,
+.uninav-tooltip.leaflet-tooltip-right::before {
+  display: none;
+}
+
+@keyframes tooltip-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
