@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { CampusLocation } from '../types';
 import { Clock, Navigation, MapPin, X, Layers, Map as MapIcon } from 'lucide-react';
 import { ImageModal } from './ImageModal';
-import { fetchGoogleRoute, LatLng } from '../services/routeService';
+import { fetchGoogleRoute, RouteResult } from '../services/routeService';
+import { isUserOnCampus, OAU_MAIN_GATE } from '../utils/locationUtils';
 import { MapContainer, TileLayer, Marker, Polyline, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -55,7 +56,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'schematic' | 'google'>('schematic');
-  const [routePolyline, setRoutePolyline] = useState<LatLng[] | null>(null);
+  const [routeResult, setRouteResult] = useState<RouteResult | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const routeFetchId = useRef(0);
 
@@ -143,25 +144,32 @@ export const CampusMap: React.FC<CampusMapProps> = ({
 
   // Fetch route from Google Directions via server proxy
   useEffect(() => {
-    if (!activeDestination) { setRoutePolyline(null); return; }
-    const destLat = activeDestination.lat;
-    const destLng = activeDestination.lng;
-    if (!destLat || !destLng) { setRoutePolyline(null); return; }
+    if (!activeDestination?.lat || !activeDestination?.lng) {
+      setRouteResult(null);
+      return;
+    }
 
-    const origin: LatLng = userLocation
-      ? { lat: userLocation.lat, lng: userLocation.lng }
-      : CAMPUS_CENTRE;
+    // If the user is outside campus, snap origin to the main gate bus stop
+    const rawOrigin = userLocation ?? CAMPUS_CENTRE;
+    const origin = isUserOnCampus(rawOrigin) ? rawOrigin : OAU_MAIN_GATE;
+    const offCampus = userLocation ? !isUserOnCampus(userLocation) : false;
+    // Attach the offCampus flag so the panel can show the gate note
+    void offCampus; // used below in JSX via routeResult check
 
     const fetchId = ++routeFetchId.current;
     setRouteLoading(true);
-    setRoutePolyline(null);
+    setRouteResult(null);
 
-    fetchGoogleRoute(origin, { lat: destLat, lng: destLng }).then((pts) => {
-      if (fetchId !== routeFetchId.current) return;
-      setRoutePolyline(pts);
-      setRouteLoading(false);
-    });
+    fetchGoogleRoute(origin, { lat: activeDestination.lat, lng: activeDestination.lng })
+      .then((result) => {
+        if (fetchId !== routeFetchId.current) return;
+        setRouteResult(result);
+        setRouteLoading(false);
+      });
   }, [userLocation, activeDestination]);
+
+  // Derive whether the user is outside the OAU perimeter (for the "gate" note)
+  const userOffCampus = userLocation ? !isUserOnCampus(userLocation) : false;
 
   const filteredLocations = useMemo(() => {
     if (!searchQuery.trim()) return locations;
@@ -194,16 +202,16 @@ export const CampusMap: React.FC<CampusMapProps> = ({
               />
 
               {/* Route Polyline from Google Directions */}
-              {routePolyline && routePolyline.length >= 2 && (
+              {routeResult && routeResult.polyline.length >= 2 && (
                 <>
                   <Polyline
-                    positions={routePolyline.map((p) => [p.lat, p.lng] as [number, number])}
+                    positions={routeResult.polyline.map((p) => [p.lat, p.lng] as [number, number])}
                     color="#1d4ed8"
                     weight={8}
                     opacity={0.12}
                   />
                   <Polyline
-                    positions={routePolyline.map((p) => [p.lat, p.lng] as [number, number])}
+                    positions={routeResult.polyline.map((p) => [p.lat, p.lng] as [number, number])}
                     color="#3b82f6"
                     weight={5}
                     opacity={0.9}
@@ -456,11 +464,51 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                 </button>
               </div>
 
+              {/* Directions Panel */}
               {routeLoading && (
-                <p className="text-[11px] text-blue-500 mt-2 text-center animate-pulse">Finding road path…</p>
+                <div className="mt-3 flex items-center gap-2 justify-center">
+                  <div className="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '100ms' }} />
+                  <div className="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '200ms' }} />
+                </div>
               )}
-              {routePolyline && !routeLoading && (
-                <p className="text-[11px] text-green-600 mt-2 text-center">✓ Road route loaded</p>
+
+              {routeResult && !routeLoading && (
+                <div className="mt-3 rounded-xl overflow-hidden border border-blue-100">
+                  {/* Summary header */}
+                  <div className="bg-blue-600 px-3 py-2 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-white">
+                      <Navigation size={12} />
+                      <span className="text-[12px] font-bold">{routeResult.totalDuration}</span>
+                    </div>
+                    <span className="text-[11px] text-blue-200 font-medium">{routeResult.totalDistance} walking</span>
+                  </div>
+
+                  {/* Off-campus gate note */}
+                  {userOffCampus && (
+                    <div className="bg-amber-50 border-b border-amber-100 px-3 py-1.5 flex items-start gap-1.5">
+                      <MapPin size={11} className="text-amber-500 mt-0.5 shrink-0" />
+                      <p className="text-[10px] text-amber-700 leading-snug font-medium">
+                        You appear to be off-campus. Directions start from OAU Main Gate.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Step-by-step list */}
+                  <ol className="divide-y divide-gray-100 bg-white max-h-[220px] overflow-y-auto">
+                    {routeResult.steps.map((step, i) => (
+                      <li key={i} className="flex items-start gap-2.5 px-3 py-2">
+                        <div className="shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[9px] font-bold flex items-center justify-center mt-0.5">
+                          {i + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] text-gray-800 font-medium leading-snug">{step.instruction}</p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">{step.distance}{step.distance && step.duration ? ' · ' : ''}{step.duration}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               )}
             </div>
           )}

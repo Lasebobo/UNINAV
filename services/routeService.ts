@@ -1,7 +1,10 @@
 /**
  * routeService.ts
- * Fetches a walking route from Google Maps Directions API and decodes
- * the returned encoded polyline into an array of {lat, lng} points.
+ * Fetches a walking route from the server proxy (/api/route) which
+ * in turn calls the Google Maps Directions API.
+ *
+ * Returns both the decoded polyline (for the map) and the human-readable
+ * turn-by-turn steps (for the directions panel / chat).
  */
 
 import { decode } from '@mapbox/polyline';
@@ -11,31 +14,69 @@ export interface LatLng {
   lng: number;
 }
 
+export interface RouteStep {
+  instruction: string;   // Plain text — HTML already stripped
+  distance: string;      // e.g. "120 m"
+  duration: string;      // e.g. "2 mins"
+  maneuver: string;      // e.g. "turn-left" | "" for straight
+}
+
+export interface RouteResult {
+  polyline:      LatLng[];
+  steps:         RouteStep[];
+  totalDistance: string;
+  totalDuration: string;
+  startAddress:  string;
+  endAddress:    string;
+}
+
+/** Strips HTML tags returned by Google (e.g. <b>, <div>) from instruction strings */
+function stripHtml(html: string): string {
+  return html
+    .replace(/<b>/gi, '').replace(/<\/b>/gi, '')
+    .replace(/<div[^>]*>/gi, ' ').replace(/<\/div>/gi, '')
+    .replace(/<wbr\/>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 /**
- * Fetches a walking route between two lat/lng points using the Google Maps
- * Directions API. Returns an array of LatLng points describing the path,
- * or null if the fetch fails or no API key is configured.
+ * Fetches a walking route between two lat/lng points via the server proxy.
+ * Returns a RouteResult with both the decoded polyline and the step-by-step
+ * directions, or null if the fetch fails.
  */
 export async function fetchGoogleRoute(
   origin: LatLng,
   destination: LatLng
-): Promise<LatLng[] | null> {
+): Promise<RouteResult | null> {
   try {
     const url = `/api/route?originLat=${origin.lat}&originLng=${origin.lng}&destLat=${destination.lat}&destLng=${destination.lng}`;
-    const res = await fetch(url);
+    const res  = await fetch(url);
     const data = await res.json();
 
-    if (!data.routes?.length) {
-      console.error('[routeService] No routes returned:', data.status);
+    if (data.error || !data.polyline) {
+      console.error('[routeService] Route error:', data.error ?? 'No polyline returned');
       return null;
     }
 
-    // Decode the polyline path
-    const decodedPoints = decode(data.routes[0].overview_polyline.points);
-    
-    // @mapbox/polyline decodes into an array of [lat, lng] arrays
-    return decodedPoints.map(([lat, lng]) => ({ lat, lng }));
+    const polyline = decode(data.polyline).map(([lat, lng]) => ({ lat, lng }));
 
+    const steps: RouteStep[] = (data.steps ?? []).map((s: any) => ({
+      instruction: stripHtml(s.instruction),
+      distance:    s.distance ?? '',
+      duration:    s.duration ?? '',
+      maneuver:    s.maneuver ?? '',
+    }));
+
+    return {
+      polyline,
+      steps,
+      totalDistance: data.totalDistance ?? '',
+      totalDuration: data.totalDuration ?? '',
+      startAddress:  data.startAddress  ?? '',
+      endAddress:    data.endAddress    ?? '',
+    };
   } catch (err) {
     console.error('[routeService] Failed to fetch route:', err);
     return null;

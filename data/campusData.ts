@@ -2,6 +2,7 @@ import { KnowledgeBase } from '../types';
 
 /**
  * OAU CAMPUS KNOWLEDGE BASE
+ * Single source of truth — deduplicated, accurate GPS coordinates.
  */
 export const CAMPUS_DATA: KnowledgeBase = {
   locations: [
@@ -19,12 +20,12 @@ export const CAMPUS_DATA: KnowledgeBase = {
     {
       id: "hezekiah_library",
       name: "Hezekiah Oluwasanmi Library",
-      aliases: ["library", "hol", "main lib"],
+      aliases: ["library", "hol", "main lib", "main library", "hezekiah library"],
       type: "academic",
-      description: "The Hezekiah Oluwasanmi Library is the central research hub, located near the Humanities block and Oduduwa Hall.",
+      description: "The central library of the university, providing extensive digital and physical resources to support the research and learning needs of students and staff.",
       coords: { x: 41.77, y: 11.27 },
-      lat: 7.5195234,
-      lng: 4.522992,
+      lat: 7.5195,
+      lng: 4.5230,
       imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFnBqF8Qjsd01OHvEe1cAJl9o_GH1rTKzYbjyzd_x7AruFaHDWX_90FUNjplXRzHXlRqT3MrxIAGb8iIGD4RkjVud8L1bresNqxCP6EPG9B7_8NzU93-hgM9B-6kXlVTdZgoXh2=s774-k-no"
     },
     {
@@ -44,9 +45,9 @@ export const CAMPUS_DATA: KnowledgeBase = {
       aliases: ["amphi", "oduduwa hall", "theatre"],
       type: "facility",
       description: "A major venue for student gatherings, shows, and large lectures, located within the Oduduwa Hall complex.",
-      coords: { x: 296.55, y: -954.43 },
-      lat: 7.6533516883643085,
-      lng: 4.569706058620607,
+      coords: { x: 47, y: -5 },
+      lat: 7.5210,
+      lng: 4.5220,
       imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFu3LF3Bp5fo6Kg7wNKa8Vt8rWLg95UQQPmtyP7vy258_P3WcH-zwe_gswkxef2xUd-Wnz2pSTvas8G98TXBGmjKjFO95RZfYO6F9T25foxKWZ-xtxL180tBAZTYndGKOeb5XE=s773-k-no"
     },
     {
@@ -55,9 +56,9 @@ export const CAMPUS_DATA: KnowledgeBase = {
       aliases: ["sub", "union building", "ken hill"],
       type: "facility",
       description: "The SUB houses the student union offices, a large buttery, and shops. It is the center of student social politics.",
-      coords: { x: 32.59, y: -232.90 },
-      lat: 7.553361707434794,
-      lng: 4.521308578369951,
+      coords: { x: 32.59, y: 50 },
+      lat: 7.5169,
+      lng: 4.5213,
       imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAGvywORI76kVXhajyeS-MVISzDKN_7g5X397pkxn5w537679IJPWdtLBVBaEPVXdWdJjJ8VhKuTcO0CHQPZXGoH13PUvRAPNlZ5ClwNpU8wWU4FuP8AMmnFtrA42M4kyltL4hQ=s901-k-no"
     },
     {
@@ -85,23 +86,23 @@ export const CAMPUS_DATA: KnowledgeBase = {
     {
       id: "pharmacy",
       name: "Faculty of Pharmacy",
-      aliases: ["pharmacy", "pharm", "pharma", "Department of Pharmacy"],
+      aliases: ["pharmacy", "pharm", "pharma", "health sciences", "drug research"],
       type: "academic",
-      description: "The Faculty of Pharmacy is a faculty of Obafemi Awolowo University, Ile-Ife, Nigeria.",
+      description: "The Faculty of Pharmacy at OAU is a premier center for pharmaceutical education and research in Nigeria, known for its rigorous academic standards.",
       coords: { x: 64.53, y: 24.20 },
-      lat: 7.51773267257539,
-      lng: 4.527163980133934,
+      lat: 7.5174,
+      lng: 4.5269,
       imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAF5x1YIB_k47a9BLrcjMCNWsxIHDhzEWlNRg1BssIEQMOsd3WZU_tTtfpb44peAG_HpjlFcof2C5nf4Kkj07eitwHdH0uyGKuI7WuJRI4kj6J6Ro8H3qo4iBqHM9YNgySsmHpt6zg=w408-h544-k-no"
     },
     {
       id: "motion_ground",
       name: "Motion Ground",
-      aliases: [],
+      aliases: ["motion", "motion ground", "car park", "gathering spot"],
       type: "facility",
-      description: "The main sports complex featuring a stadium, swimming pool, and courts for various sports.",
-      coords: { x: 52.72, y: 80 },
-      lat: 7.5100,
-      lng: 4.5250,
+      description: "A prominent open space and transit hub near the academic core, often used as a landmark for navigation and student gatherings.",
+      coords: { x: 38, y: 30 },
+      lat: 7.5183,
+      lng: 4.5228,
       imageUrl: "https://images.unsplash.com/photo-1518605368461-1ee738019316?auto=format&fit=crop&w=600&q=80"
     },
     {
@@ -109,7 +110,7 @@ export const CAMPUS_DATA: KnowledgeBase = {
       name: "FirstBank Lecture Theatre",
       aliases: ["FBLT", "firstbank lecture", "firstbank LT"],
       type: "academic",
-      description: "A lecture room that is Firstbank sponsored",
+      description: "A large lecture theatre sponsored by FirstBank, used for major academic and university events.",
       coords: { x: 47.45, y: -7.55 },
       lat: 7.522132,
       lng: 4.524033,
@@ -120,25 +121,87 @@ export const CAMPUS_DATA: KnowledgeBase = {
       name: "Faculty of Science",
       aliases: ["FOS", "faculty of science", "science faculty"],
       type: "academic",
-      description: "The Faculty of Science is a faculty of Obafemi Awolowo University, Ile-Ife, Nigeria.",
+      description: "The Faculty of Science at Obafemi Awolowo University, home to departments including Physics, Chemistry, and Mathematics.",
       coords: { x: 53.46, y: 14.03 },
-      lat: 7.519140877819225,
-      lng: 4.525135337940335,
+      lat: 7.51914,
+      lng: 4.52514,
       imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAF5x1YIB_k47a9BLrcjMCNWsxIHDhzEWlNRg1BssIEQMOsd3WZU_tTtfpb44peAG_HpjlFcof2C5nf4Kkj07eitwHdH0uyGKuI7WuJRI4kj6J6Ro8H3qo4iBqHM9YNgySsmHpt6zg=w408-h544-k-no"
     },
     {
       id: "ACE",
       name: "ACE",
-      aliases: ["post graduate", "PG lecture theatre", ""],
+      aliases: ["post graduate", "PG lecture theatre", "ace building"],
       type: "academic",
-      description: "The Post graduate facility  Obafemi Awolowo University, Ile-Ife, Nigeria.",
+      description: "The postgraduate facility at Obafemi Awolowo University, Ile-Ife, Nigeria.",
       coords: { x: 80.18, y: 23.52 },
-      lat: 7.517826064344423, 
-      lng: 4.530034590223604,
+      lat: 7.517826,
+      lng: 4.530035,
       imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAF5x1YIB_k47a9BLrcjMCNWsxIHDhzEWlNRg1BssIEQMOsd3WZU_tTtfpb44peAG_HpjlFcof2C5nf4Kkj07eitwHdH0uyGKuI7WuJRI4kj6J6Ro8H3qo4iBqHM9YNgySsmHpt6zg=w408-h544-k-no"
-    }
+    },
 
+    // ── New locations (GPS-verified) ──────────────────────────
+    {
+      id: "microbiology_molecular_biology",
+      name: "Dept of Microbiology and Molecular Biology",
+      aliases: ["microbiology", "molecular biology lab", "biology department"],
+      type: "academic",
+      description: "A hub for biological research focusing on microorganisms and the molecular basis of biological activity, within the biological sciences complex.",
+      coords: { x: 0, y: 0 },
+      lat: 7.5189,
+      lng: 4.5256
+    },
+    {
+      id: "botany_department",
+      name: "Department of Botany",
+      aliases: ["botany", "plant science", "herbarium"],
+      type: "academic",
+      description: "Dedicated to the study of plant life and ecology, this department manages botanical collections and laboratories for plant research.",
+      coords: { x: 0, y: 0 },
+      lat: 7.5194,
+      lng: 4.5256
+    },
+    {
+      id: "biochemistry_molecular_biology",
+      name: "Dept of Biochemistry and Molecular Biology",
+      aliases: ["biochem", "biochemistry lab", "biological sciences"],
+      type: "academic",
+      description: "Located within the Biological Sciences area, this department focuses on chemical processes within and relating to living organisms.",
+      coords: { x: 0, y: 0 },
+      lat: 7.5190,
+      lng: 4.5256
+    },
+    {
+      id: "english_department",
+      name: "Department of English",
+      aliases: ["english", "arts block", "humanities"],
+      type: "academic",
+      description: "A core department in the Faculty of Arts, fostering literary analysis, linguistics, and creative expression.",
+      coords: { x: 0, y: 0 },
+      lat: 7.5192,
+      lng: 4.5237
+    },
+    {
+      id: "bus_stop",
+      name: "Campus Bus Stop",
+      aliases: ["bus stop", "shuttle park", "transport hub", "korope stop"],
+      type: "transport",
+      description: "A major transit point for the campus shuttle (korope) system, connecting students to various residential and academic blocks.",
+      coords: { x: 0, y: 0 },
+      lat: 7.5173,
+      lng: 4.5232
+    },
+    {
+      id: "step_b",
+      name: "Step B Building",
+      aliases: ["step b", "project office", "ict center"],
+      type: "academic",
+      description: "Part of the World Bank assisted project facilities, housing specialized research equipment and ICT infrastructure.",
+      coords: { x: 0, y: 0 },
+      lat: 7.5179,
+      lng: 4.5286
+    },
   ],
+
   routes: [
     {
       id: "r1",
@@ -170,10 +233,13 @@ export const CAMPUS_DATA: KnowledgeBase = {
       description: "A short walk past the SUB towards Oduduwa Hall."
     }
   ],
+
   generalInfo: [
     "Campus Shuttles (Korope) charge ₦50-₦100 per trip.",
     "The Health Center is located on Road 1, near the Staff Quarters.",
     "Night reading at the Library ends at 10 PM, but 24/7 reading rooms are available in faculties.",
-    "OAU is known as 'Africa's Most Beautiful Campus'."
+    "OAU is known as 'Africa's Most Beautiful Campus'.",
+    "The OAU Main Gate is the primary entry point from Ile-Ife town and the main bus stop.",
+    "The Biological Sciences complex houses Microbiology, Botany, and Biochemistry departments."
   ]
 };
