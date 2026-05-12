@@ -10,13 +10,13 @@ interface LiveAPIProps {
 export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript }) => {
   const [status, setStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [volume, setVolume] = useState(0);
-  
+
   // Refs for audio handling
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  
+
   // Output Audio
   const nextStartTimeRef = useRef<number>(0);
   const outputAudioContextRef = useRef<AudioContext | null>(null);
@@ -36,28 +36,28 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
 
         const ai = new GoogleGenAI({ apiKey });
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        
+
         let inputCtx: AudioContext;
         let outputCtx: AudioContext;
         try {
-            inputCtx = new AudioContextClass({ sampleRate: 16000 });
-            outputCtx = new AudioContextClass({ sampleRate: 24000 });
+          inputCtx = new AudioContextClass({ sampleRate: 16000 });
+          outputCtx = new AudioContextClass({ sampleRate: 24000 });
         } catch (e) {
-            // Safari/iOS fallback
-            inputCtx = new AudioContextClass();
-            outputCtx = new AudioContextClass();
+          // Safari/iOS fallback
+          inputCtx = new AudioContextClass();
+          outputCtx = new AudioContextClass();
         }
-        
+
         audioContextRef.current = inputCtx;
         outputAudioContextRef.current = outputCtx;
 
-        const stream = await navigator.mediaDevices.getUserMedia({ 
+        const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             sampleRate: 16000,
             channelCount: 1,
             echoCancellation: true,
             noiseSuppression: true
-          } 
+          }
         });
         streamRef.current = stream;
 
@@ -67,22 +67,22 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
           callbacks: {
             onopen: () => {
               setStatus('connected');
-              
+
               // Setup Input Processing
               const source = inputCtx.createMediaStreamSource(stream);
               sourceRef.current = source;
-              
+
               // Buffer size 4096, 1 input channel, 1 output channel
               const processor = inputCtx.createScriptProcessor(4096, 1, 1);
               processorRef.current = processor;
-              
+
               processor.onaudioprocess = (e) => {
                 const inputData = e.inputBuffer.getChannelData(0);
-                
+
                 // Volume viz
                 let sum = 0;
-                for(let i=0; i<inputData.length; i++) sum += inputData[i]*inputData[i];
-                setVolume(Math.sqrt(sum/inputData.length));
+                for (let i = 0; i < inputData.length; i++) sum += inputData[i] * inputData[i];
+                setVolume(Math.sqrt(sum / inputData.length));
 
                 // Send to Gemini
                 const pcmBlob = createBlob(inputData);
@@ -90,7 +90,7 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
                   session.sendRealtimeInput({ media: pcmBlob });
                 });
               };
-              
+
               source.connect(processor);
               processor.connect(inputCtx.destination);
             },
@@ -107,55 +107,55 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
 
                 // Decode PCM
                 const buffer = decodePCMToAudioBuffer(bytes, ctx);
-                
+
                 const src = ctx.createBufferSource();
                 src.buffer = buffer;
                 src.connect(ctx.destination);
-                
+
                 // Scheduling for gapless playback
                 const currentTime = ctx.currentTime;
                 if (nextStartTimeRef.current < currentTime) {
-                    nextStartTimeRef.current = currentTime;
+                  nextStartTimeRef.current = currentTime;
                 }
                 src.start(nextStartTimeRef.current);
                 nextStartTimeRef.current += buffer.duration;
-                
+
                 sourcesRef.current.add(src);
                 src.onended = () => sourcesRef.current.delete(src);
               }
 
               // Handle Interruption
               if (msg.serverContent?.interrupted) {
-                 sourcesRef.current.forEach(s => s.stop());
-                 sourcesRef.current.clear();
-                 nextStartTimeRef.current = 0;
+                sourcesRef.current.forEach(s => s.stop());
+                sourcesRef.current.clear();
+                nextStartTimeRef.current = 0;
               }
-              
+
               // Handle Transcripts
               // The SDK types might differ slightly, checking structure based on docs
               // We cast to any to access properties that might not be in the strict type definition yet
               const anyMsg = msg as any;
-              
+
               // User Input Transcription
               // Note: The structure might be different, checking documentation pattern
               // If the model sends back user input transcription, it's usually in a specific field
               // For now, we'll log it to see structure if needed, but let's try to access it
-              
+
               // Model Output Transcription (if available)
               // This is usually in the modelTurn parts if modality includes TEXT, but for AUDIO only, 
               // we rely on the audio.
-              
+
               // If we want text updates in the chat, we might need to enable TEXT modality too, 
               // but the native audio model is optimized for AUDIO-only low latency.
               // Let's stick to AUDIO for now and focus on the voice experience.
             },
             onclose: () => {
-                console.log("Session closed");
-                // Don't set error if closed intentionally
+              console.log("Session closed");
+              // Don't set error if closed intentionally
             },
             onerror: (err) => {
-                console.error("Session error:", err);
-                setStatus('error');
+              console.error("Session error:", err);
+              setStatus('error');
             }
           },
           config: {
@@ -194,11 +194,11 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
       if (outputAudioContextRef.current) {
         outputAudioContextRef.current.close();
       }
-      
+
       if (sessionRef.current) {
-          sessionRef.current.then((s: any) => s.close());
+        sessionRef.current.then((s: any) => s.close());
       }
-      
+
       sourcesRef.current.forEach(s => s.stop());
       sourcesRef.current.clear();
     };
@@ -213,45 +213,45 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm">
       {/* Close Button */}
-      <button 
-        onClick={handleClose} 
+      <button
+        onClick={handleClose}
         className="absolute top-10 right-6 md:top-8 md:right-8 p-4 text-white/60 hover:text-white transition-colors"
       >
         <span className="text-2xl font-bold">✕</span>
       </button>
-      
+
       <div className="flex flex-col items-center gap-8 w-full max-w-md px-8">
         {/* Visualizer Circle */}
-        <div 
-            className={`
+        <div
+          className={`
                 w-32 h-32 rounded-full flex items-center justify-center transition-all duration-200
                 ${status === 'connected' ? 'bg-blue-600 shadow-[0_0_40px_rgba(37,99,235,0.6)]' : 'bg-gray-700'}
             `}
-            style={{
-                transform: status === 'connected' ? `scale(${1 + (volume * 0.2)})` : 'scale(1)'
-            }}
+          style={{
+            transform: status === 'connected' ? `scale(${1 + (volume * 0.2)})` : 'scale(1)'
+          }}
         >
-           {status === 'connecting' ? (
-               <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
-           ) : status === 'error' ? (
-               <div className="text-red-500 text-3xl">!</div>
-           ) : (
-               <div className="w-4 h-4 bg-white rounded-full" />
-           )}
+          {status === 'connecting' ? (
+            <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+          ) : status === 'error' ? (
+            <div className="text-red-500 text-3xl">!</div>
+          ) : (
+            <div className="w-4 h-4 bg-white rounded-full" />
+          )}
         </div>
-        
+
         <div className="text-center space-y-2">
           <h2 className="text-white text-2xl font-bold">Live Voice Chat</h2>
           <p className="text-gray-400">
-            {status === 'connecting' ? 'Connecting to Gemini...' : 
-             status === 'connected' ? 'Listening...' : 
-             status === 'error' ? 'Connection Failed' : 'Ready'}
+            {status === 'connecting' ? 'Connecting to Gemini...' :
+              status === 'connected' ? 'Listening...' :
+                status === 'error' ? 'Connection Failed' : 'Ready'}
           </p>
-          
+
           {status === 'error' && (
-              <p className="text-red-400 text-sm mt-2">
-                  Please check your microphone permissions and API key.
-              </p>
+            <p className="text-red-400 text-sm mt-2">
+              Please check your microphone permissions and API key.
+            </p>
           )}
         </div>
       </div>
@@ -270,7 +270,7 @@ function createBlob(data: Float32Array) {
     const s = Math.max(-1, Math.min(1, data[i]));
     int16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
   }
-  
+
   // Convert Int16Array to binary string
   let binary = '';
   const bytes = new Uint8Array(int16.buffer);
@@ -278,9 +278,9 @@ function createBlob(data: Float32Array) {
   for (let i = 0; i < len; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
-  
+
   const b64 = btoa(binary);
-  
+
   return {
     data: b64,
     mimeType: 'audio/pcm;rate=16000',
@@ -293,14 +293,14 @@ function decodePCMToAudioBuffer(data: Uint8Array, ctx: AudioContext) {
   const numChannels = 1;
   const dataInt16 = new Int16Array(data.buffer);
   const frameCount = dataInt16.length;
-  
+
   const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
   const channelData = buffer.getChannelData(0);
-  
+
   for (let i = 0; i < frameCount; i++) {
     // Convert Int16 to Float32 [-1, 1]
     channelData[i] = dataInt16[i] / 32768.0;
   }
-  
+
   return buffer;
 }
