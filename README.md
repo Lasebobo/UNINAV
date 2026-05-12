@@ -1,2 +1,0 @@
-# UNINAV
-OAU navigation chatbot
