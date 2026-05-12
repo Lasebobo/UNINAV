@@ -35,17 +35,30 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
         if (!apiKey) throw new Error("No API Key configured. Please add VITE_GEMINI_API_KEY to your environment.");
 
         const ai = new GoogleGenAI({ apiKey });
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
         
-        // Setup Audio Contexts
-        // Input: 16kHz for Gemini
-        const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
-        // Output: 24kHz from Gemini
-        const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        let inputCtx: AudioContext;
+        let outputCtx: AudioContext;
+        try {
+            inputCtx = new AudioContextClass({ sampleRate: 16000 });
+            outputCtx = new AudioContextClass({ sampleRate: 24000 });
+        } catch (e) {
+            // Safari/iOS fallback
+            inputCtx = new AudioContextClass();
+            outputCtx = new AudioContextClass();
+        }
         
         audioContextRef.current = inputCtx;
         outputAudioContextRef.current = outputCtx;
 
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            sampleRate: 16000,
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true
+          } 
+        });
         streamRef.current = stream;
 
         // Connect to Live API
@@ -198,11 +211,11 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm">
       {/* Close Button */}
       <button 
         onClick={handleClose} 
-        className="absolute top-8 right-8 p-4 text-white/60 hover:text-white transition-colors"
+        className="absolute top-10 right-6 md:top-8 md:right-8 p-4 text-white/60 hover:text-white transition-colors"
       >
         <span className="text-2xl font-bold">✕</span>
       </button>

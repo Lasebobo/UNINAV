@@ -231,8 +231,8 @@ const App: React.FC = () => {
               <button 
                  className="absolute right-1.5 md:right-2 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors shrink-0 shadow-sm md:shadow-none"
                  onClick={() => {
+                   setHasStarted(true);
                    if (startInput.trim()) {
-                     setHasStarted(true);
                      processUserRequest(startInput.trim());
                    } else {
                      setIsLiveOpen(true);
