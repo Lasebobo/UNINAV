@@ -103,7 +103,11 @@ export const processQuery = async (
     ...customLocations
   ];
   
-  const suggestedLocationId = findLocationInQuery(userQuery, allLocations);
+  const getSuggestedLocation = (answerText: string = "") => {
+    let locId = findLocationInQuery(userQuery, allLocations);
+    if (!locId && answerText) locId = findLocationInQuery(answerText, allLocations);
+    return locId;
+  };
 
   const formatHistory = (currentPrompt: string) => {
     let finalPrompt = currentPrompt;
@@ -212,7 +216,7 @@ export const processQuery = async (
         answer: response.text, 
         context: ["Used Google Maps Grounding"], 
         groundingMetadata: response.groundingMetadata,
-        suggestedLocationId 
+        suggestedLocationId: getSuggestedLocation(response.text)
     };
   }
 
@@ -230,7 +234,7 @@ export const processQuery = async (
         answer: response.text, 
         context: ["Used Google Search Grounding"], 
         groundingMetadata: response.groundingMetadata,
-        suggestedLocationId
+        suggestedLocationId: getSuggestedLocation(response.text)
     };
   }
 
@@ -252,7 +256,7 @@ export const processQuery = async (
      return { 
          answer: response.text, 
          context: [...contextStrings, "Used Gemini 3 Pro Thinking"],
-         suggestedLocationId
+         suggestedLocationId: getSuggestedLocation(response.text)
      };
   }
 
@@ -285,6 +289,6 @@ export const processQuery = async (
   return {
     answer: response.text,
     context: contextStrings,
-    suggestedLocationId
+    suggestedLocationId: getSuggestedLocation(response.text)
   };
 };

@@ -10,7 +10,6 @@ interface LiveAPIProps {
 export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript }) => {
   const [status, setStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [volume, setVolume] = useState(0);
-  const [transcript, setTranscript] = useState('');
 
   // Refs for audio handling
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -130,17 +129,25 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
                 sourcesRef.current.forEach(s => s.stop());
                 sourcesRef.current.clear();
                 nextStartTimeRef.current = 0;
-                setTranscript(prev => prev + '\n\n');
               }
 
               // Handle Transcripts
-              const parts = msg.serverContent?.modelTurn?.parts;
-              if (parts) {
-                 const textPart = parts.find((p: any) => p.text);
-                 if (textPart && textPart.text) {
-                     setTranscript(prev => prev + textPart.text);
-                 }
-              }
+              // The SDK types might differ slightly, checking structure based on docs
+              // We cast to any to access properties that might not be in the strict type definition yet
+              const anyMsg = msg as any;
+
+              // User Input Transcription
+              // Note: The structure might be different, checking documentation pattern
+              // If the model sends back user input transcription, it's usually in a specific field
+              // For now, we'll log it to see structure if needed, but let's try to access it
+
+              // Model Output Transcription (if available)
+              // This is usually in the modelTurn parts if modality includes TEXT, but for AUDIO only, 
+              // we rely on the audio.
+
+              // If we want text updates in the chat, we might need to enable TEXT modality too, 
+              // but the native audio model is optimized for AUDIO-only low latency.
+              // Let's stick to AUDIO for now and focus on the voice experience.
             },
             onclose: () => {
               console.log("Session closed");
@@ -152,7 +159,7 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
             }
           },
           config: {
-            responseModalities: [Modality.AUDIO, 'TEXT' as any],
+            responseModalities: [Modality.AUDIO],
             speechConfig: {
               voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } }
             },
@@ -247,14 +254,6 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
             </p>
           )}
         </div>
-
-        {transcript && (
-          <div className="w-full max-w-sm bg-gray-900/60 rounded-xl p-4 border border-gray-800 max-h-48 overflow-y-auto">
-            <p className="text-gray-300 italic text-sm leading-relaxed whitespace-pre-wrap font-serif">
-               {transcript}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

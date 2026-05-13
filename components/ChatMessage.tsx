@@ -7,21 +7,22 @@ import { Map } from 'lucide-react';
 
 interface ChatMessageProps {
   message: Message;
+  locations?: CampusLocation[];
   onViewMap?: () => void;
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onViewMap }) => {
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, locations = [], onViewMap }) => {
   const [isImageOpen, setIsImageOpen] = useState(false);
   const isBot = message.role === 'bot';
   const formattedTime = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const locationImg = useMemo(() => {
      if (isBot && message.suggestedLocationId) {
-         const loc = CAMPUS_DATA.locations.find(l => l.id === message.suggestedLocationId);
+         const loc = locations.find(l => l.id === message.suggestedLocationId) || CAMPUS_DATA.locations.find(l => l.id === message.suggestedLocationId);
          return loc?.imageUrl;
      }
      return null;
-  }, [isBot, message.suggestedLocationId]);
+  }, [isBot, message.suggestedLocationId, locations]);
 
   return (
     <div className={`w-full mb-6 flex gap-3 ${isBot ? 'justify-start' : 'justify-end'}`}>

@@ -7,7 +7,7 @@ import { CampusMap } from './components/CampusMap';
 import { LiveAPI } from './components/LiveAPI';
 import { CAMPUS_DATA } from './data/campusData';
 import { supabase } from './utils/supabase';
-import { MapPin, Compass, Mic, Search, Map, Menu, Send, Trash2 } from 'lucide-react';
+import { MapPin, Compass, Mic, Search, Map, Menu, Send, Trash2, MessageSquare, ArrowLeft } from 'lucide-react';
 
 // Simple ID generator
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -56,6 +56,7 @@ const App: React.FC = () => {
   const [isLiveOpen, setIsLiveOpen] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [mapKey, setMapKey] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -205,6 +206,8 @@ const App: React.FC = () => {
     setHasStarted(false);
     setShowClearConfirm(false);
     setActiveTab('chat');
+    setActiveDestination(null);
+    setMapKey(prev => prev + 1);
   };
 
   const handleLiveTranscript = (role: 'user' | 'bot', text: string) => {
@@ -335,6 +338,11 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="h-[60px] md:h-16 bg-white border-b border-gray-100 flex justify-between items-center px-4 shrink-0 shadow-sm z-10 transition-all">
           <div className="flex items-center gap-3">
+                 {activeTab === 'map' && (
+                     <button onClick={() => setActiveTab('chat')} className="text-gray-400 hover:text-gray-600 transition-colors p-1" title="Back to Chat">
+                         <ArrowLeft className="w-5 h-5" />
+                     </button>
+                 )}
                  <img src="/logo.png" alt="Logo" className="w-9 h-9 rounded-full shadow-sm shrink-0" />
                  <div className="flex flex-col">
                      <h1 className="text-gray-800 font-semibold text-[15px] leading-tight">
@@ -345,14 +353,17 @@ const App: React.FC = () => {
                      </span>
                  </div>
              </div>
-          </div>
           <div className="flex items-center gap-2">
             <button 
                 onClick={() => setActiveTab(activeTab === 'map' ? 'chat' : 'map')}
                 className="text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors p-2.5 rounded-full mr-1 flex items-center justify-center shadow-sm"
                 title={activeTab === 'map' ? 'Back to Chat' : 'Open Map'}
             >
-                <Map className="w-4 h-4 md:w-5 md:h-5" />
+                {activeTab === 'map' ? (
+                  <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
+                ) : (
+                  <Map className="w-4 h-4 md:w-5 md:h-5" />
+                )}
             </button>
             {activeTab !== 'map' && (
                 <button 
@@ -410,6 +421,7 @@ const App: React.FC = () => {
         {activeTab === 'map' ? (
             <div className="absolute inset-0 flex flex-col">
                 <CampusMap 
+                    key={mapKey}
                     locations={locations} 
                     onLocationSelect={handleLocationSelect}
                     onGetDirections={handleGetDirections}
@@ -428,6 +440,7 @@ const App: React.FC = () => {
                             <ChatMessage 
                                 key={msg.id} 
                                 message={msg} 
+                                locations={locations}
                                 onViewMap={() => {
                                     if (msg.suggestedLocationId) {
                                         const loc = locations.find(l => l.id === msg.suggestedLocationId);
