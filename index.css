@@ -31,6 +31,10 @@
 }
 
 /* ── UniNav Leaflet Tooltip Override ─────────────────────────── */
+.leaflet-container {
+  border-radius: inherit;
+}
+
 .uninav-tooltip.leaflet-tooltip {
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.08);

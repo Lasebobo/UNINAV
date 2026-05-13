@@ -334,13 +334,7 @@ const App: React.FC = () => {
     <div className="fixed inset-0 flex flex-col bg-gray-50 overflow-hidden">
       {/* Header */}
       <header className="h-[60px] md:h-16 bg-white border-b border-gray-100 flex justify-between items-center px-4 shrink-0 shadow-sm z-10 transition-all">
-          <div className="flex items-center gap-4">
-             <button onClick={() => {
-                 setActiveTab(activeTab === 'map' ? 'chat' : 'map');
-             }} className="text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors p-2 rounded-full" title={activeTab === 'map' ? 'Back to Chat' : 'Open Map'}>
-                 <Map className="w-5 h-5" />
-             </button>
-             <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
                  <img src="/logo.png" alt="Logo" className="w-9 h-9 rounded-full shadow-sm shrink-0" />
                  <div className="flex flex-col">
                      <h1 className="text-gray-800 font-semibold text-[15px] leading-tight">
@@ -353,10 +347,17 @@ const App: React.FC = () => {
              </div>
           </div>
           <div className="flex items-center gap-2">
+            <button 
+                onClick={() => setActiveTab(activeTab === 'map' ? 'chat' : 'map')}
+                className="text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors p-2.5 rounded-full mr-1 flex items-center justify-center shadow-sm"
+                title={activeTab === 'map' ? 'Back to Chat' : 'Open Map'}
+            >
+                <Map className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
             {activeTab !== 'map' && (
                 <button 
                   onClick={() => setShowClearConfirm(true)} 
-                  className="text-gray-400 hover:text-red-500 p-2 transition-colors mr-2"
+                  className="text-gray-400 hover:text-red-500 p-2 transition-colors mr-1"
                   title="Clear Chat History"
                 >
                   <Trash2 className="w-5 h-5" />
@@ -365,7 +366,7 @@ const App: React.FC = () => {
             {activeTab === 'map' && (
                 <button 
                   onClick={() => setIsSidebarOpen(true)} 
-                  className="text-gray-500 hover:text-gray-800 p-2 transition-colors mr-2 md:hidden"
+                  className="text-gray-500 hover:text-gray-800 p-2 transition-colors md:hidden"
                   title="Open Locations"
                 >
                   <Menu className="w-6 h-6" />

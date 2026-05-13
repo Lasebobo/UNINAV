@@ -184,8 +184,8 @@ export const CampusMap: React.FC<CampusMapProps> = ({
     <div className="flex h-full w-full bg-[#f8fafc] overflow-hidden">
 
       {/* Left Column: Map */}
-      <div className="flex-1 md:p-4 md:pr-2 flex flex-col relative min-w-0">
-        <div className="flex-1 bg-white md:rounded-xl shadow-sm border-0 md:border md:border-gray-200 overflow-hidden relative">
+      <div className="flex-1 md:p-4 md:pr-2 flex flex-col relative min-w-0 z-10">
+        <div className="flex-1 bg-white md:rounded-xl shadow-sm border-0 md:border md:border-gray-200 relative" style={{ borderRadius: 'inherit' }}>
 
           {/* Leaflet Map */}
           {viewMode === 'schematic' ? (
@@ -338,7 +338,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
           )}
 
           {/* Satellite / Map Toggle */}
-          <div className="absolute top-4 left-4 md:top-6 md:left-6 z-[500]">
+          <div className="absolute bottom-24 right-4 md:bottom-6 md:right-6 z-[400]">
             <button
               onClick={() => setViewMode(viewMode === 'schematic' ? 'google' : 'schematic')}
               className="bg-white p-3 md:px-3 md:py-2.5 rounded-2xl md:rounded-xl shadow-lg border border-gray-100 flex flex-col items-center justify-center text-gray-700 hover:bg-gray-50 hover:shadow-xl transition-all md:min-w-[76px] min-w-[46px] min-h-[46px]"
