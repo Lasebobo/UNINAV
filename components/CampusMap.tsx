@@ -24,9 +24,9 @@ const MapController: React.FC<{
   const map = useMap();
   useEffect(() => {
     if (destination?.lat && destination?.lng) {
-      map.setView([destination.lat, destination.lng], 17, { animate: true });
+      map.flyTo([destination.lat, destination.lng], 17, { animate: true, duration: 1.5 });
     } else if (userLocation) {
-      map.setView([userLocation.lat, userLocation.lng], 16, { animate: true });
+      map.flyTo([userLocation.lat, userLocation.lng], 16, { animate: true, duration: 1.5 });
     }
   }, [destination, userLocation]);
   return null;
@@ -78,12 +78,13 @@ export const CampusMap: React.FC<CampusMapProps> = ({
     return L.divIcon({
       html: `
         <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
-          <div style="
+          <div class="${isActive ? 'active-pin-pulse' : ''}" style="
+            --pin-color-trans: ${color}AA;
             width:${size}px;height:${size}px;
             background:${color};
             border-radius:50%;
             border:2.5px solid white;
-            box-shadow:${isActive ? `0 0 0 6px ${color}33,` : ''}0 2px 8px rgba(0,0,0,0.28);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.28);
             display:flex;align-items:center;justify-content:center;
             cursor:pointer;
           ">
@@ -425,126 +426,116 @@ export const CampusMap: React.FC<CampusMapProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 pb-6">
-          {/* Selected Card */}
-          {activeDestination && (
-            <div className="bg-[#f0f5fc] rounded-xl mb-6 relative border border-transparent shadow-sm overflow-hidden flex flex-col p-5">
-              <button
-                onClick={() => onLocationSelect(null)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
-              >
-                <X size={16} />
-              </button>
-
-              {activeDestination.imageUrl && (
-                <div
-                  className="h-36 w-full rounded-lg overflow-hidden mb-4 cursor-pointer relative"
-                  onClick={() => setFullscreenImage(activeDestination.imageUrl!)}
-                >
-                  <img src={activeDestination.imageUrl} alt={activeDestination.name} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                </div>
-              )}
-
-              <div className="flex items-center gap-2 mb-2">
-                <div
-                  className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: getPinStyle(activeDestination.type).color }}
-                />
-                <h3 className="text-[15px] font-bold text-gray-900 leading-tight">{activeDestination.name}</h3>
-              </div>
-              <p className="text-[12px] text-gray-500 leading-snug mb-4">{activeDestination.description}</p>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onGetDirections(activeDestination)}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold py-2.5 px-3 rounded-lg transition-colors"
-                >
-                  <Navigation size={13} />
-                  Directions
-                </button>
-              </div>
-
-              {/* Directions Panel */}
-              {routeLoading && (
-                <div className="mt-3 flex items-center gap-2 justify-center">
-                  <div className="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '100ms' }} />
-                  <div className="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '200ms' }} />
-                </div>
-              )}
-
-              {routeResult && !routeLoading && (
-                <div className="mt-3 rounded-xl overflow-hidden border border-blue-100">
-                  {/* Summary header */}
-                  <div className="bg-blue-600 px-3 py-2 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-white">
-                      <Navigation size={12} />
-                      <span className="text-[12px] font-bold">{routeResult.totalDuration}</span>
-                    </div>
-                    <span className="text-[11px] text-blue-200 font-medium">{routeResult.totalDistance} walking</span>
-                  </div>
-
-                  {/* Off-campus gate note */}
-                  {userOffCampus && (
-                    <div className="bg-amber-50 border-b border-amber-100 px-3 py-1.5 flex items-start gap-1.5">
-                      <MapPin size={11} className="text-amber-500 mt-0.5 shrink-0" />
-                      <p className="text-[10px] text-amber-700 leading-snug font-medium">
-                        You appear to be off-campus. Directions start from OAU Main Gate.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Step-by-step list */}
-                  <ol className="divide-y divide-gray-100 bg-white max-h-[220px] overflow-y-auto">
-                    {routeResult.steps.map((step, i) => (
-                      <li key={i} className="flex items-start gap-2.5 px-3 py-2">
-                        <div className="shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[9px] font-bold flex items-center justify-center mt-0.5">
-                          {i + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] text-gray-800 font-medium leading-snug">{step.instruction}</p>
-                          <p className="text-[10px] text-gray-400 mt-0.5">{step.distance}{step.distance && step.duration ? ' · ' : ''}{step.duration}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Locations List */}
-          {!activeDestination && (
-            <div className="mb-4">
-              <p className="text-xs text-gray-400 font-medium mb-3">
-                {searchQuery ? `Results for "${searchQuery}"` : `All Locations (${filteredLocations.length})`}
-              </p>
-            </div>
-          )}
+          <div className="mb-4">
+            <p className="text-xs text-gray-400 font-medium mb-3">
+              {searchQuery ? `Results for "${searchQuery}"` : `All Locations (${filteredLocations.length})`}
+            </p>
+          </div>
 
           <div className="flex flex-col gap-2">
             {filteredLocations.map((loc) => {
               const isActive = activeDestination?.id === loc.id;
               const style = getPinStyle(loc.type);
               return (
-                <button
-                  key={loc.id}
-                  onClick={() => onLocationSelect(loc)}
-                  className={`w-full text-left px-4 py-3.5 rounded-xl border transition-all ${
-                    isActive
-                      ? 'bg-blue-50 border-blue-200 shadow-sm'
-                      : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: style.color }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-gray-900 truncate">{loc.name}</p>
-                      <p className="text-[11px] text-gray-400 truncate mt-0.5">{loc.description}</p>
+                <div key={loc.id} className="flex flex-col gap-2">
+                  <button
+                    onClick={() => onLocationSelect(isActive ? null : loc)}
+                    className={`w-full text-left px-4 py-3.5 rounded-xl border transition-all ${
+                      isActive
+                        ? 'bg-blue-50 border-blue-200 shadow-sm'
+                        : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: style.color }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold text-gray-900 truncate">{loc.name}</p>
+                        <p className="text-[11px] text-gray-400 truncate mt-0.5">{loc.description}</p>
+                      </div>
+                      {isActive && <MapPin size={14} className="text-blue-500 shrink-0" />}
                     </div>
-                    {isActive && <MapPin size={14} className="text-blue-500 shrink-0" />}
-                  </div>
-                </button>
+                  </button>
+                  
+                  {isActive && (
+                    <div className="bg-[#f0f5fc] rounded-xl relative border border-blue-100 shadow-sm overflow-hidden flex flex-col p-5 mb-2 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                      {loc.imageUrl && (
+                        <div
+                          className="h-36 w-full rounded-lg overflow-hidden mb-4 cursor-pointer relative"
+                          onClick={() => setFullscreenImage(loc.imageUrl!)}
+                        >
+                          <img src={loc.imageUrl} alt={loc.name} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 mb-2">
+                        <div
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: getPinStyle(loc.type).color }}
+                        />
+                        <h3 className="text-[15px] font-bold text-gray-900 leading-tight">{loc.name}</h3>
+                      </div>
+                      <p className="text-[12px] text-gray-500 leading-snug mb-4">{loc.description}</p>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => onGetDirections(loc)}
+                          className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold py-2.5 px-3 rounded-lg transition-colors"
+                        >
+                          <Navigation size={13} />
+                          Directions
+                        </button>
+                      </div>
+
+                      {/* Directions Panel */}
+                      {routeLoading && (
+                        <div className="mt-3 flex items-center gap-2 justify-center">
+                          <div className="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '100ms' }} />
+                          <div className="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '200ms' }} />
+                        </div>
+                      )}
+
+                      {routeResult && !routeLoading && (
+                        <div className="mt-3 rounded-xl overflow-hidden border border-blue-100">
+                          {/* Summary header */}
+                          <div className="bg-blue-600 px-3 py-2 flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 text-white">
+                              <Navigation size={12} />
+                              <span className="text-[12px] font-bold">{routeResult.totalDuration}</span>
+                            </div>
+                            <span className="text-[11px] text-blue-200 font-medium">{routeResult.totalDistance} walking</span>
+                          </div>
+
+                          {/* Off-campus gate note */}
+                          {userOffCampus && (
+                            <div className="bg-amber-50 border-b border-amber-100 px-3 py-1.5 flex items-start gap-1.5">
+                              <MapPin size={11} className="text-amber-500 mt-0.5 shrink-0" />
+                              <p className="text-[10px] text-amber-700 leading-snug font-medium">
+                                You appear to be off-campus. Directions start from OAU Main Gate.
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Step-by-step list */}
+                          <ol className="divide-y divide-gray-100 bg-white max-h-[220px] overflow-y-auto">
+                            {routeResult.steps.map((step, i) => (
+                              <li key={i} className="flex items-start gap-2.5 px-3 py-2">
+                                <div className="shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[9px] font-bold flex items-center justify-center mt-0.5">
+                                  {i + 1}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] text-gray-800 font-medium leading-snug">{step.instruction}</p>
+                                  <p className="text-[10px] text-gray-400 mt-0.5">{step.distance}{step.distance && step.duration ? ' · ' : ''}{step.duration}</p>
+                                </div>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

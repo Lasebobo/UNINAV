@@ -21,6 +21,15 @@
   }
 }
 
+.active-pin-pulse {
+  animation: pin-pulse 1.5s infinite;
+}
+@keyframes pin-pulse {
+  0% { box-shadow: 0 0 0 0 var(--pin-color-trans); }
+  70% { box-shadow: 0 0 0 15px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
 /* ── UniNav Leaflet Tooltip Override ─────────────────────────── */
 .uninav-tooltip.leaflet-tooltip {
   background: #ffffff;

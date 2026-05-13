@@ -7,22 +7,42 @@ import { CampusMap } from './components/CampusMap';
 import { LiveAPI } from './components/LiveAPI';
 import { CAMPUS_DATA } from './data/campusData';
 import { supabase } from './utils/supabase';
-import { MapPin, Compass, Mic, Search, Map, ArrowLeft, Menu, Send } from 'lucide-react';
+import { MapPin, Compass, Mic, Search, Map, Menu, Send, Trash2 } from 'lucide-react';
 
 // Simple ID generator
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
 
 const App: React.FC = () => {
-  const [hasStarted, setHasStarted] = useState(false);
-  const [startInput, setStartInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'bot',
-      content: "Welcome to OAU! I can help you find the Senate Building, Moremi Hall, or check the latest news.",
-      timestamp: Date.now()
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = localStorage.getItem('uninav_messages');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.length > 0) return parsed;
+      } catch (e) {}
     }
-  ]);
+    return [
+      {
+        id: '1',
+        role: 'bot',
+        content: "Welcome to OAU! I can help you find the Senate Building, Moremi Hall, or check the latest news.",
+        timestamp: Date.now()
+      }
+    ];
+  });
+
+  const [hasStarted, setHasStarted] = useState<boolean>(() => {
+    const saved = localStorage.getItem('uninav_messages');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.length > 1) return true; // length > 1 means they chatted beyond the initial welcome message
+      } catch (e) {}
+    }
+    return false;
+  });
+
+  const [startInput, setStartInput] = useState('');
 
   const [locations, setLocations] = useState<CampusLocation[]>(CAMPUS_DATA.locations);
   
@@ -45,6 +65,10 @@ const App: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
+    localStorage.setItem('uninav_messages', JSON.stringify(messages));
+    if (messages.length > 1 && !hasStarted) {
+      setHasStarted(true);
+    }
   }, [messages, activeTab]);
 
   useEffect(() => {
@@ -172,8 +196,15 @@ const App: React.FC = () => {
   };
 
   const clearHistory = () => {
-    setMessages([]);
+    setMessages([{
+      id: '1',
+      role: 'bot',
+      content: "Welcome to OAU! I can help you find the Senate Building, Moremi Hall, or check the latest news.",
+      timestamp: Date.now()
+    }]);
+    setHasStarted(false);
     setShowClearConfirm(false);
+    setActiveTab('chat');
   };
 
   const handleLiveTranscript = (role: 'user' | 'bot', text: string) => {
@@ -305,10 +336,9 @@ const App: React.FC = () => {
       <header className="h-[60px] md:h-16 bg-white border-b border-gray-100 flex justify-between items-center px-4 shrink-0 shadow-sm z-10 transition-all">
           <div className="flex items-center gap-4">
              <button onClick={() => {
-                 if (activeTab === 'map') setActiveTab('chat');
-                 else setHasStarted(false);
-             }} className="text-gray-400 hover:text-gray-600 transition-colors p-1" title={activeTab === 'map' ? 'Back to Chat' : 'Back to Home'}>
-                 <ArrowLeft className="w-5 h-5" />
+                 setActiveTab(activeTab === 'map' ? 'chat' : 'map');
+             }} className="text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors p-2 rounded-full" title={activeTab === 'map' ? 'Back to Chat' : 'Open Map'}>
+                 <Map className="w-5 h-5" />
              </button>
              <div className="flex items-center gap-3">
                  <img src="/logo.png" alt="Logo" className="w-9 h-9 rounded-full shadow-sm shrink-0" />
@@ -322,24 +352,26 @@ const App: React.FC = () => {
                  </div>
              </div>
           </div>
-          {activeTab !== 'map' && (
-              <button 
-                onClick={() => setActiveTab('map')} 
-                className="text-gray-400 hover:text-blue-600 p-2 transition-colors mr-2"
-                title="Open Campus Map"
-              >
-                <Map className="w-5 h-5" />
-              </button>
-          )}
-          {activeTab === 'map' && (
-              <button 
-                onClick={() => setIsSidebarOpen(true)} 
-                className="text-gray-500 hover:text-gray-800 p-2 transition-colors mr-2 md:hidden"
-                title="Open Locations"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-          )}
+          <div className="flex items-center gap-2">
+            {activeTab !== 'map' && (
+                <button 
+                  onClick={() => setShowClearConfirm(true)} 
+                  className="text-gray-400 hover:text-red-500 p-2 transition-colors mr-2"
+                  title="Clear Chat History"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+            )}
+            {activeTab === 'map' && (
+                <button 
+                  onClick={() => setIsSidebarOpen(true)} 
+                  className="text-gray-500 hover:text-gray-800 p-2 transition-colors mr-2 md:hidden"
+                  title="Open Locations"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+            )}
+          </div>
       </header>
 
       {/* Clear History Confirmation Modal */}
