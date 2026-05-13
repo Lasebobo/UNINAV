@@ -354,17 +354,15 @@ const App: React.FC = () => {
                  </div>
              </div>
           <div className="flex items-center gap-2">
-            <button 
-                onClick={() => setActiveTab(activeTab === 'map' ? 'chat' : 'map')}
-                className="text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors p-2.5 rounded-full mr-1 flex items-center justify-center shadow-sm"
-                title={activeTab === 'map' ? 'Back to Chat' : 'Open Map'}
-            >
-                {activeTab === 'map' ? (
-                  <MessageSquare className="w-4 h-4 md:w-5 md:h-5" />
-                ) : (
+            {activeTab !== 'map' && (
+              <button 
+                  onClick={() => setActiveTab('map')}
+                  className="text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors p-2.5 rounded-full mr-1 flex items-center justify-center shadow-sm"
+                  title="Open Map"
+              >
                   <Map className="w-4 h-4 md:w-5 md:h-5" />
-                )}
-            </button>
+              </button>
+            )}
             {activeTab !== 'map' && (
                 <button 
                   onClick={() => setShowClearConfirm(true)} 

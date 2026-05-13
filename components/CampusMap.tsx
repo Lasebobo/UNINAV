@@ -64,9 +64,12 @@ export const CampusMap: React.FC<CampusMapProps> = ({
 
   useEffect(() => {
     if (activeDestination && sidebarRef.current) {
-      sidebarRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      // Small timeout to allow DOM to render before scrolling
+      setTimeout(() => {
+        sidebarRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 50);
     }
-  }, [activeDestination]);
+  }, [activeDestination, isSidebarOpen]);
 
   const CAMPUS_CENTRE: LatLng = { lat: 7.5197, lng: 4.5190 };
 
