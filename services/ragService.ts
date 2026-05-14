@@ -112,7 +112,7 @@ export const processQuery = async (
   const formatHistory = (currentPrompt: string) => {
     let finalPrompt = currentPrompt;
     if (userLocation) {
-       finalPrompt += `\n\n[System Note: The user's current GPS location is Latitude ${userLocation.lat}, Longitude ${userLocation.lng}. Use this for providing precise turn-by-turn directions or nearby information if requested.]`;
+       finalPrompt += `\n\n[System Note: The user's current GPS location is Latitude ${userLocation.lat}, Longitude ${userLocation.lng}. Use this for calculating routes, but NEVER display these raw coordinates in your response. Describe their location using nearby landmarks instead.]`;
     }
 
     const formatted: { role: string; parts: { text: string }[] }[] = [];
@@ -207,7 +207,7 @@ export const processQuery = async (
     const response = await generateGeminiResponse(formatHistory(mapsQuery), {
       modelType: 'maps',
       location: userLocation,
-      systemInstruction: "You are a helpful campus guide. Use the Google Maps tool to find real-world location info. You assist with navigation both within the Obafemi Awolowo University (OAU) campus and provide directions from outside locations (other cities, states, bus stops, etc.) to the campus. Be detailed with transport options and estimated times."
+      systemInstruction: "You are a helpful campus guide. Use the Google Maps tool to find real-world location info. You assist with navigation both within the Obafemi Awolowo University (OAU) campus and provide directions from outside locations (other cities, states, bus stops, etc.) to the campus. Be detailed with transport options and estimated times. IMPORTANT: Never display raw latitude and longitude coordinates in your response. Instead of using raw coordinates, use recognizable campus landmarks and context (e.g., 'opposite the Faculty of Pharmacy', 'near the main gate') to describe locations and give directions."
     });
 
     if (response.isError) return generateFallbackResponse(userQuery, allLocations);
@@ -248,7 +248,7 @@ export const processQuery = async (
      
      const response = await generateGeminiResponse(formatHistory(prompt), {
        modelType: 'thinking',
-       systemInstruction: "You are an expert campus planner. Think deeply to provide a comprehensive answer. Use the provided context to answer if possible. If the context does not contain the answer, use your built-in knowledge or Google Search to find the information. Do not say 'the provided context does not include information'."
+       systemInstruction: "You are an expert campus planner. Think deeply to provide a comprehensive answer. Use the provided context to answer if possible. If the context does not contain the answer, use your built-in knowledge or Google Search to find the information. Do not say 'the provided context does not include information'. NEVER output raw latitude/longitude coordinates; always use descriptive landmarks."
      });
 
      if (response.isError) return generateFallbackResponse(userQuery, allLocations);
@@ -271,6 +271,7 @@ export const processQuery = async (
   const systemInstruction = `
     You are the OAU Campus Guide.
     Use the provided context to answer if possible. If the context does not contain the answer, use your built-in knowledge or Google Search to find the information. Do not say "the provided context does not include information". Provide the best possible answer or directions.
+    IMPORTANT: Never display raw latitude and longitude coordinates in your response. Always use recognizable campus landmarks and context (e.g., 'opposite the Faculty of Pharmacy', 'near the main gate') to describe locations and give directions.
     Keep it concise.
   `;
   const prompt = `Context:\n${contextStrings.join('\n')}\n\nQuestion about Obafemi Awolowo University (OAU): ${userQuery}`;

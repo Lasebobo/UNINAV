@@ -96,7 +96,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!navigator.geolocation) {
       setLocationError("Geolocation is not supported by your browser.");
-      setUserLocation({ lat: 7.5197, lng: 4.5190 }); // Default fallback OAU center
+      setUserLocation({ lat: 7.5173, lng: 4.5232 }); // Default fallback: Bus Stop
       return;
     }
 
@@ -112,10 +112,10 @@ const App: React.FC = () => {
         console.warn("Geolocation error:", error);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            setLocationError("Location permission denied. Using default campus center.");
+            setLocationError("Location permission denied. Using default bus stop location.");
             break;
           case error.POSITION_UNAVAILABLE:
-            setLocationError("Location unavailable. Using default campus center.");
+            setLocationError("Location unavailable. Using default bus stop location.");
             break;
           case error.TIMEOUT:
             setLocationError("Location request timed out.");
@@ -126,7 +126,7 @@ const App: React.FC = () => {
         }
         // Fallback to default coordinating so the map doesn't break
         if (!userLocation) {
-          setUserLocation({ lat: 7.5197, lng: 4.5190 });
+          setUserLocation({ lat: 7.5173, lng: 4.5232 });
         }
       },
       {

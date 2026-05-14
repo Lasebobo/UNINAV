@@ -148,7 +148,7 @@ export const CAMPUS_DATA: KnowledgeBase = {
       description: "A hub for biological research focusing on microorganisms and the molecular basis of biological activity, within the biological sciences complex.",
       coords: { x: 0, y: 0 },
       lat: 7.5189,
-      lng: 4.5256
+      lng: 4.5258
     },
     {
       id: "botany_department",
@@ -157,8 +157,8 @@ export const CAMPUS_DATA: KnowledgeBase = {
       type: "academic",
       description: "Dedicated to the study of plant life and ecology, this department manages botanical collections and laboratories for plant research.",
       coords: { x: 0, y: 0 },
-      lat: 7.5194,
-      lng: 4.5256
+      lat: 7.5195,
+      lng: 4.5254
     },
     {
       id: "biochemistry_molecular_biology",
@@ -167,8 +167,8 @@ export const CAMPUS_DATA: KnowledgeBase = {
       type: "academic",
       description: "Located within the Biological Sciences area, this department focuses on chemical processes within and relating to living organisms.",
       coords: { x: 0, y: 0 },
-      lat: 7.5190,
-      lng: 4.5256
+      lat: 7.5187,
+      lng: 4.5252
     },
     {
       id: "english_department",
