@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Message } from '../types';
+import { Message, CampusLocation } from '../types';
 import ReactMarkdown from 'react-markdown';
 import { CAMPUS_DATA } from '../data/campusData';
 import { ImageModal } from './ImageModal';
@@ -19,7 +19,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, locations = [
   const locationImg = useMemo(() => {
      if (isBot && message.suggestedLocationId) {
          const loc = locations.find(l => l.id === message.suggestedLocationId) || CAMPUS_DATA.locations.find(l => l.id === message.suggestedLocationId);
-         return loc?.imageUrl;
+         return loc?.imageData ? `data:image/jpeg;base64,${loc.imageData}` : loc?.imageUrl;
      }
      return null;
   }, [isBot, message.suggestedLocationId, locations]);

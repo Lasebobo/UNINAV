@@ -41,6 +41,33 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+/** Replace street names with generic "Road" labels for campus map display */
+function replaceWithRoadLabels(instruction: string): string {
+  // Pattern: "Head on [street name] for [distance]" or "Turn on [street name]" etc.
+  // Replace specific street names with generic Road labels
+  const roadPattern = /(?:head on|turn on|turn left on|turn right on|continue on)\s+([A-Z][A-Za-z\s0-9]*?)(?:\s+for|\s*$)/gi;
+  
+  let roadCounter = 1;
+  const roadMap: Record<string, string> = {};
+  
+  return instruction.replace(roadPattern, (match, streetName) => {
+    const cleanedName = streetName.trim();
+    
+    // Avoid replacing common landmarks or keywords
+    if (cleanedName.match(/plaza|square|avenue|boulevard|circle|mall|park|building/i)) {
+      return match;
+    }
+    
+    if (!roadMap[cleanedName]) {
+      roadMap[cleanedName] = `Road ${roadCounter}`;
+      roadCounter++;
+    }
+    
+    const roadLabel = roadMap[cleanedName];
+    return match.replace(cleanedName, roadLabel);
+  });
+}
+
 /**
  * Fetches a walking route between two lat/lng points via the server proxy.
  * Returns a RouteResult with both the decoded polyline and the step-by-step
@@ -63,7 +90,7 @@ export async function fetchGoogleRoute(
     const polyline = decode(data.polyline).map(([lat, lng]) => ({ lat, lng }));
 
     const steps: RouteStep[] = (data.steps ?? []).map((s: any) => ({
-      instruction: stripHtml(s.instruction),
+      instruction: replaceWithRoadLabels(stripHtml(s.instruction)),
       distance:    s.distance ?? '',
       duration:    s.duration ?? '',
       maneuver:    s.maneuver ?? '',

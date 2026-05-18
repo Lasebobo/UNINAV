@@ -17,10 +17,10 @@ const OAU_BOUNDS = {
 };
 
 /**
- * The OAU Main Gate bus stop — used as the routing origin when
+ * The OAU Main Gate — used as the routing origin when
  * the user's GPS fix is outside the campus perimeter.
  */
-export const OAU_MAIN_GATE: LatLng = { lat: 7.5003, lng: 4.5147 };
+export const OAU_MAIN_GATE: LatLng = { lat: 7.497281099999999, lng: 4.522773 };
 
 /**
  * Returns true if the given coordinates fall within the OAU campus

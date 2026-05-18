@@ -12,12 +12,13 @@ export interface CampusLocation {
   id: string;
   name: string;
   aliases: string[];
-  type: 'academic' | 'facility' | 'transport' | 'residential' | 'custom';
+  type: 'academic' | 'facility' | 'transport' | 'residential' | 'landmark' | 'health' | 'custom';
   description: string;
   coords: { x: number; y: number }; // Percentage 0-100 on schematic
   lat?: number; // Real-world Latitude
   lng?: number; // Real-world Longitude
   imageUrl?: string; // Preview image
+  imageData?: string; // Base64 encoded image data
 }
 
 export interface RouteInfo {

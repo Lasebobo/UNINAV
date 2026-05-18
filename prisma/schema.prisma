@@ -17,6 +17,7 @@ model Location {
   lat         Float?
   lng         Float?
   imageUrl    String?
+  imageData   String?  // Base64 encoded image data
 
   // Relations
   routesFrom Route[] @relation("RoutesFrom")

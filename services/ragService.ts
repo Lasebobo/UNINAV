@@ -98,7 +98,8 @@ export const processQuery = async (
         coords: { x: l.coordsX, y: l.coordsY },
         lat: l.lat ?? undefined,
         lng: l.lng ?? undefined,
-        imageUrl: l.imageUrl ?? undefined
+        imageUrl: l.imageUrl ?? undefined,
+        imageData: l.imageData ?? undefined
     })), 
     ...customLocations
   ];

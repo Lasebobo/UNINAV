@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useImperativeHandle } from 'react';
 import { CampusLocation } from '../types';
 import { Clock, Navigation, MapPin, X, Layers, Map as MapIcon } from 'lucide-react';
 import { ImageModal } from './ImageModal';
@@ -17,20 +17,49 @@ L.Icon.Default.mergeOptions({
 });
 
 // Programmatically pan/zoom the map when activeDestination changes
-const MapController: React.FC<{
+const MapController = React.forwardRef<{
+  repositionToUser: () => void;
+}, {
   destination?: CampusLocation | null;
   userLocation?: { lat: number; lng: number };
-}> = ({ destination, userLocation }) => {
+}>(({ destination, userLocation }, ref) => {
   const map = useMap();
+  const [lastAutoReposition, setLastAutoReposition] = useState<number>(0);
+
+  // Auto-reposition to user location every 2 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (userLocation && Date.now() - lastAutoReposition >= 120000) { // 2 minutes
+        map.flyTo([userLocation.lat, userLocation.lng], 16, { animate: true, duration: 1.5 });
+        setLastAutoReposition(Date.now());
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [userLocation, lastAutoReposition, map]);
+
+  // Manual reposition function
+  const repositionToUser = () => {
+    if (userLocation) {
+      map.flyTo([userLocation.lat, userLocation.lng], 16, { animate: true, duration: 1.5 });
+      setLastAutoReposition(Date.now());
+    }
+  };
+
+  // Fly to destination when it changes (no auto for user location)
   useEffect(() => {
     if (destination?.lat && destination?.lng) {
       map.flyTo([destination.lat, destination.lng], 17, { animate: true, duration: 1.5 });
-    } else if (userLocation) {
-      map.flyTo([userLocation.lat, userLocation.lng], 16, { animate: true, duration: 1.5 });
     }
-  }, [destination, userLocation]);
+  }, [destination]);
+
+  // Expose reposition function
+  useImperativeHandle(ref, () => ({
+    repositionToUser,
+  }));
+
   return null;
-};
+});
 
 interface CampusMapProps {
   locations: CampusLocation[];
@@ -54,13 +83,15 @@ export const CampusMap: React.FC<CampusMapProps> = ({
   onOpenSidebar,
 }) => {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const mapControllerRef = useRef<{ repositionToUser: () => void }>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'schematic' | 'google'>('schematic');
   const [routeResult, setRouteResult] = useState<RouteResult | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
+  const [hoveredLocationId, setHoveredLocationId] = useState<string | null>(null);
   const routeFetchId = useRef(0);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const [tooltipDirections, setTooltipDirections] = useState<Record<string, 'top' | 'bottom'>>({});
+  const [tooltipDirections, setTooltipDirections] = useState<Record<string, 'top' | 'bottom'>>({})
 
   useEffect(() => {
     if (activeDestination && sidebarRef.current) {
@@ -71,7 +102,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
     }
   }, [activeDestination, isSidebarOpen]);
 
-  const CAMPUS_CENTRE: LatLng = { lat: 7.5197, lng: 4.5190 };
+  const CAMPUS_CENTRE = { lat: 7.5197, lng: 4.5190 };
 
   const typeConfig: Record<string, { color: string; label: string }> = {
     academic:    { color: '#3b82f6', label: 'Building' },
@@ -249,21 +280,27 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                     eventHandlers={{ 
                       click: () => onLocationSelect(loc),
                       mouseover: (e: any) => {
+                        setHoveredLocationId(loc.id);
                         const y = e.containerPoint.y;
                         if (y < 220) {
                           setTooltipDirections(prev => ({ ...prev, [loc.id]: 'bottom' }));
                         } else {
                           setTooltipDirections(prev => ({ ...prev, [loc.id]: 'top' }));
                         }
+                      },
+                      mouseout: () => {
+                        setHoveredLocationId(null);
                       }
                     }}
                   >
-                    {/* Hover tooltip */}
+                    {/* Hover tooltip - only show when this location is hovered */}
+                    {hoveredLocationId === loc.id && (
                     <Tooltip
                       direction={tooltipDirections[loc.id] || "top"}
                       offset={tooltipDirections[loc.id] === 'bottom' ? [0, 20] : [0, -36]}
                       opacity={1}
                       className="uninav-tooltip"
+                      permanent={true}
                     >
                       <div style={{ width: '220px', overflow: 'hidden' }}>
                         {/* Image banner */}
@@ -342,11 +379,12 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                         </div>
                       </div>
                     </Tooltip>
+                    )}
                   </Marker>
                 );
               })}
 
-              <MapController destination={activeDestination} userLocation={userLocation} />
+              <MapController ref={mapControllerRef} destination={activeDestination} userLocation={userLocation} />
             </MapContainer>
           ) : (
             <iframe
@@ -378,11 +416,16 @@ export const CampusMap: React.FC<CampusMapProps> = ({
             </button>
           </div>
 
-          {/* Compass */}
+          {/* Reposition Button */}
           {viewMode === 'schematic' && (
-            <div className="absolute top-4 right-4 md:top-6 md:right-6 w-[46px] h-[46px] bg-white rounded-full shadow-lg border border-gray-100 flex flex-col items-center justify-center text-blue-600 font-bold text-xs pointer-events-none z-[400]">
-              <span>N</span>
-              <div className="w-0.5 h-2.5 bg-blue-600 mt-0.5 rounded-full"></div>
+            <div className="absolute top-4 right-4 md:top-6 md:right-6 z-[400]">
+              <button
+                onClick={() => mapControllerRef.current?.repositionToUser()}
+                className="w-[46px] h-[46px] bg-white rounded-full shadow-lg border border-gray-100 flex flex-col items-center justify-center text-blue-600 hover:bg-blue-50 transition-all"
+                title="Reposition to current location"
+              >
+                <Navigation size={20} strokeWidth={2.5} />
+              </button>
             </div>
           )}
 

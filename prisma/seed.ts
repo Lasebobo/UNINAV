@@ -1,13 +1,31 @@
 import "dotenv/config";
 import { prisma } from '../services/dbService';
 import { CAMPUS_DATA } from '../data/campusData';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function main() {
   console.log('Starting to seed the database...');
 
+  // Helper function to get image data
+  const getImageData = (imageUrl?: string): string | null => {
+    if (!imageUrl || !imageUrl.startsWith('images/')) return null;
+    const imagePath = path.join(__dirname, '..', 'public', imageUrl);
+    if (fs.existsSync(imagePath)) {
+      const buffer = fs.readFileSync(imagePath);
+      return buffer.toString('base64');
+    }
+    return null;
+  };
+
   // 1. Seed Locations
   console.log('Seeding Locations...');
   for (const loc of CAMPUS_DATA.locations) {
+    const imageData = getImageData(loc.imageUrl);
     await prisma.location.upsert({
       where: { id: loc.id },
       update: {
@@ -20,6 +38,7 @@ async function main() {
         lat: loc.lat,
         lng: loc.lng,
         imageUrl: loc.imageUrl,
+        imageData: imageData,
       },
       create: {
         id: loc.id,
@@ -32,6 +51,7 @@ async function main() {
         lat: loc.lat,
         lng: loc.lng,
         imageUrl: loc.imageUrl,
+        imageData: imageData,
       },
     });
   }
