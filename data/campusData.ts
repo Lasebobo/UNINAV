@@ -124,7 +124,7 @@ const RAW_CAMPUS_DATA = {
       description: "The postgraduate facility at Obafemi Awolowo University, Ile-Ife, Nigeria.",
       lat: 7.517826,
       lng: 4.530035,
-      imageUrl: "https://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/gate.JPG"
+      imageUrl: "https://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/ACE.jpg"
     },
 
     // ── New locations (GPS-verified) ──────────────────────────

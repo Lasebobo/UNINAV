@@ -2,9 +2,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { originLat, originLng, destLat, destLng } = req.query;
+  const mode = (req.query.mode as string | undefined) ?? 'walking';
 
   try {
-    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${originLat},${originLng}&destination=${destLat},${destLng}&mode=walking&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${originLat},${originLng}&destination=${destLat},${destLng}&mode=${mode}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
     const response = await fetch(url);
     const data = await response.json();
 

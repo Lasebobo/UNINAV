@@ -25,6 +25,16 @@ const MapController = React.forwardRef<{
 }>(({ destination, userLocation }, ref) => {
   const map = useMap();
   const [lastAutoReposition, setLastAutoReposition] = useState<number>(0);
+  const [initialZoomDone, setInitialZoomDone] = useState(false);
+
+  // Zoom to user location once when the map loads and their location becomes available
+  useEffect(() => {
+    if (userLocation && !initialZoomDone) {
+      map.flyTo([userLocation.lat, userLocation.lng], 16, { animate: true, duration: 1.5 });
+      setInitialZoomDone(true);
+      setLastAutoReposition(Date.now());
+    }
+  }, [userLocation, initialZoomDone, map]);
 
   // Auto-reposition to user location every 2 minutes
   useEffect(() => {
@@ -196,6 +206,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
     const rawOrigin = userLocation ?? CAMPUS_CENTRE;
     const origin = isUserOnCampus(rawOrigin) ? rawOrigin : OAU_MAIN_GATE;
     const offCampus = userLocation ? !isUserOnCampus(userLocation) : false;
+    const useRawGoogleNames = viewMode === 'google';
     // Attach the offCampus flag so the panel can show the gate note
     void offCampus; // used below in JSX via routeResult check
 
@@ -203,13 +214,13 @@ export const CampusMap: React.FC<CampusMapProps> = ({
     setRouteLoading(true);
     setRouteResult(null);
 
-    fetchGoogleRoute(origin, { lat: activeDestination.lat, lng: activeDestination.lng })
+    fetchGoogleRoute(origin, { lat: activeDestination.lat, lng: activeDestination.lng }, useRawGoogleNames)
       .then((result) => {
         if (fetchId !== routeFetchId.current) return;
         setRouteResult(result);
         setRouteLoading(false);
       });
-  }, [userLocation, activeDestination]);
+  }, [userLocation, activeDestination, viewMode]);
 
   // Derive whether the user is outside the OAU perimeter (for the "gate" note)
   const userOffCampus = userLocation ? !isUserOnCampus(userLocation) : false;
