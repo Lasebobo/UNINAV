@@ -42,6 +42,33 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+/** Replace street names with generic "Road" labels for campus map display */
+function replaceWithRoadLabels(instruction: string): string {
+  // Pattern: "Head on [street name] for [distance]" or "Turn on [street name]" etc.
+  // Replace specific street names with generic Road labels
+  const roadPattern = /(?:head on|turn on|turn left on|turn right on|continue on)\s+([A-Z][A-Za-z\s0-9]*?)(?:\s+for|\s*$)/gi;
+  
+  let roadCounter = 1;
+  const roadMap: Record<string, string> = {};
+  
+  return instruction.replace(roadPattern, (match, streetName) => {
+    const cleanedName = streetName.trim();
+    
+    // Avoid replacing common landmarks or keywords
+    if (cleanedName.match(/plaza|square|avenue|boulevard|circle|mall|park|building/i)) {
+      return match;
+    }
+    
+    if (!roadMap[cleanedName]) {
+      roadMap[cleanedName] = `Road ${roadCounter}`;
+      roadCounter++;
+    }
+    
+    const roadLabel = roadMap[cleanedName];
+    return match.replace(cleanedName, roadLabel);
+  });
+}
+
 function formatDistance(meters: number): string {
   if (meters >= 1000) {
     return `${(meters / 1000).toFixed(1).replace(/\.0$/, '')} km`;
@@ -119,18 +146,28 @@ async function fetchOsrmRoute(
 
     const polyline = (route.geometry?.coordinates ?? []).map(([lng, lat]: [number, number]) => ({ lat, lng }));
 
-    const steps: RouteStep[] = (leg.steps ?? []).map((step: any) => ({
-      instruction: buildOsrmInstruction(step),
-      distance:    formatDistance(step.distance ?? 0),
-      duration:    formatDuration(step.duration ?? 0),
-      maneuver:    step.maneuver?.type ?? '',
-    }));
+    // Define average walking speed: 4.8 km/h = 1.33 m/s
+    const WALKING_SPEED_M_S = 1.33;
+
+    const steps: RouteStep[] = (leg.steps ?? []).map((step: any) => {
+      const stepDistance = step.distance ?? 0;
+      const calculatedDuration = stepDistance / WALKING_SPEED_M_S;
+      return {
+        instruction: buildOsrmInstruction(step),
+        distance:    formatDistance(stepDistance),
+        duration:    formatDuration(calculatedDuration),
+        maneuver:    step.maneuver?.type ?? '',
+      };
+    });
+
+    const totalDistance = leg.distance ?? 0;
+    const totalCalculatedDuration = totalDistance / WALKING_SPEED_M_S;
 
     return {
       polyline,
       steps,
-      totalDistance: formatDistance(leg.distance ?? 0),
-      totalDuration: formatDuration(leg.duration ?? 0),
+      totalDistance: formatDistance(totalDistance),
+      totalDuration: formatDuration(totalCalculatedDuration),
       startAddress:  '',
       endAddress:    '',
     };
