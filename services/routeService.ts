@@ -87,6 +87,20 @@ function formatDuration(seconds: number): string {
   return `${Math.round(seconds / 60)} mins`;
 }
 
+/** Perform a fetch with an AbortController timeout. Returns the Response or throws on timeout. */
+async function fetchWithTimeout(input: RequestInfo, init: RequestInit | undefined, timeoutMs = 15000): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(input, { ...(init || {}), signal: controller.signal });
+    clearTimeout(id);
+    return res;
+  } catch (err) {
+    clearTimeout(id);
+    throw err;
+  }
+}
+
 function getRoadName(name: string | undefined): string {
   const trimmed = name?.trim();
   return trimmed && trimmed.length > 0 ? trimmed : 'the campus road';
@@ -130,7 +144,7 @@ async function fetchOsrmRoute(
   try {
     const coordinates = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
     const url = `https://router.project-osrm.org/route/v1/foot/${coordinates}?overview=full&geometries=geojson&steps=true&annotations=true`;
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url, undefined, 15000);
     const data = await res.json();
 
     if (!data.routes?.length) {
@@ -204,7 +218,7 @@ export async function fetchGoogleRoute(
     }
 
     const url = `/api/route?originLat=${origin.lat}&originLng=${origin.lng}&destLat=${destination.lat}&destLng=${destination.lng}`;
-    const res  = await fetch(url);
+    const res  = await fetchWithTimeout(url, undefined, 15000);
     const data = await res.json();
 
     if (data.error || !data.polyline) {
@@ -242,7 +256,7 @@ async function fetchGoogleProxyRoute(
 ): Promise<RouteResult | null> {
   try {
     const url = `/api/route?originLat=${origin.lat}&originLng=${origin.lng}&destLat=${destination.lat}&destLng=${destination.lng}`;
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url, undefined, 15000);
     if (!res.ok) {
       console.warn('[routeService] Google proxy HTTP error:', res.status, res.statusText);
       return null;
@@ -291,20 +305,79 @@ async function fetchGoogleProxyRoute(
  *
  * Both results are stored; the UI toggle swaps between them without re-fetching.
  */
+/**
+ * Retry helper: calls `fn` up to `attempts` times with exponential backoff delays.
+ * `delaysMs` is an array of delays to wait before each retry (in ms).
+ * Calls `onAttempt` with attempt number (1-based) before each try.
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T | null>,
+  attempts = 3,
+  delaysMs = [2000, 4000, 8000],
+  onAttempt?: (attempt: number) => void
+): Promise<T | null> {
+  for (let i = 0; i < attempts; i++) {
+    const attempt = i + 1;
+    try {
+      onAttempt?.(attempt);
+      const res = await fn();
+      if (res) return res;
+      // if fn returned null, fallthrough to retry
+    } catch (err) {
+      // log and retry
+      console.warn('[routeService] attempt error', err);
+    }
+
+    if (i < attempts - 1) {
+      const delay = delaysMs[i] ?? delaysMs[delaysMs.length - 1] ?? 2000;
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Try OSRM first with retries; if OSRM fails after retries, try Google proxy with retries.
+ * Calls `onProgress` with { phase, attempt } updates so callers can update UI/voice.
+ */
 export async function fetchBothRoutes(
   origin: LatLng,
-  destination: LatLng
+  destination: LatLng,
+  onProgress?: (info: { phase: 'osrm' | 'google' | 'done' | 'failed'; attempt?: number }) => void
 ): Promise<{ osrmRoute: RouteResult | null; googleRoute: RouteResult | null }> {
-  console.log('[routeService] fetchBothRoutes →', origin, '→', destination);
+  console.log('[routeService] fetchBothRoutes (with retries) →', origin, '→', destination);
 
-  const [osrmResult, googleResult] = await Promise.allSettled([
-    fetchOsrmRoute(origin, destination),
-    fetchGoogleProxyRoute(origin, destination),
-  ]);
+  // Try OSRM with retries
+  const osrmRoute = await retryWithBackoff<RouteResult>(
+    () => fetchOsrmRoute(origin, destination),
+    3,
+    [2000, 4000, 8000],
+    (attempt) => onProgress?.({ phase: 'osrm', attempt })
+  );
 
-  const osrmRoute   = osrmResult.status   === 'fulfilled' ? osrmResult.value   : null;
-  const googleRoute = googleResult.status === 'fulfilled' ? googleResult.value : null;
+  if (osrmRoute) {
+    onProgress?.({ phase: 'done' });
+    // Still fetch google in background for the toggle, but do not block the UI
+    fetchGoogleProxyRoute(origin, destination).then((g) => {
+      if (g) console.log('[routeService] background google route fetched');
+    }).catch(() => {});
+    return { osrmRoute, googleRoute: null };
+  }
 
-  console.log('[routeService] osrm:', osrmRoute ? '✓' : '✗ failed', '| google:', googleRoute ? '✓' : '✗ failed');
-  return { osrmRoute, googleRoute };
+  // OSRM failed after retries — try Google with retries
+  const googleRoute = await retryWithBackoff<RouteResult>(
+    () => fetchGoogleProxyRoute(origin, destination),
+    3,
+    [2000, 4000, 8000],
+    (attempt) => onProgress?.({ phase: 'google', attempt })
+  );
+
+  if (googleRoute) {
+    onProgress?.({ phase: 'done' });
+    return { osrmRoute: null, googleRoute };
+  }
+
+  onProgress?.({ phase: 'failed' });
+  return { osrmRoute: null, googleRoute: null };
 }

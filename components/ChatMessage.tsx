@@ -12,6 +12,8 @@ interface ChatMessageProps {
   onViewMap?: () => void;
   /** Called when user taps "Get Directions" on a Mode A description message */
   onGetDirections?: (locationName: string) => void;
+  /** Optional retry handler for failed directions */
+  onRetryDirections?: (locationName: string) => void;
 }
 
 // Maneuver icon mapping for step arrows
@@ -248,7 +250,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               : 'bg-blue-600 text-white rounded-tr-sm'}
           `}
         >
-          {locationImg && (
+          {locationImg && message.directionsStatus !== 'error' && (
             <div
               className="w-full h-36 mb-3 mt-1 rounded-lg overflow-hidden bg-gray-200 border border-gray-300/30 shadow-sm shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
               onClick={() => setIsImageOpen(true)}
@@ -285,6 +287,45 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           {/* Mode B — directions panel */}
           {isBot && isDirectionsMode && (
             <DirectionsPanel message={message} onViewMap={onViewMap} />
+          )}
+
+          {/* Transient loading / retry UI for directions fetch */}
+          {isBot && !isDirectionsMode && (message.directionsStatus === 'loading' || message.directionsStatus === 'retrying') && (
+            <div className="mt-3 flex items-center gap-3 bg-white border border-gray-100 rounded-lg px-3 py-2">
+              <div className="w-4 h-4 rounded-full border-2 border-blue-500 animate-spin" />
+              <div className="text-sm text-gray-600">
+                {message.content}
+              </div>
+            </div>
+          )}
+
+          {/* Directions error UI */}
+          {isBot && !isDirectionsMode && message.directionsStatus === 'error' && (
+            <div className="mt-3 w-full rounded-lg border border-red-100 bg-red-50 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-semibold text-red-700">⚠️ Directions unavailable</h4>
+                  <p className="text-xs text-red-600 mt-1">We couldn't load the route due to a network issue.</p>
+                </div>
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => {
+                    if (suggestedLocName && onGetDirections) onGetDirections(suggestedLocName);
+                  }}
+                  className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Retry Directions
+                </button>
+                <button
+                  onClick={() => onViewMap && onViewMap()}
+                  className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700"
+                >
+                  View on Map
+                </button>
+              </div>
+            </div>
           )}
         </div>
 

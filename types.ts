@@ -26,6 +26,10 @@ export interface Message {
   directionsPayload?: DirectionsPayload;
   /** True for MODE A messages — renders "Get Directions" button */
   isDescriptionMode?: boolean;
+  /** Optional transient directions status while fetching */
+  directionsStatus?: 'loading' | 'retrying' | 'error';
+  /** How many retry attempts have been made so far (informational) */
+  directionsRetryCount?: number;
 }
 
 export interface CampusLocation {

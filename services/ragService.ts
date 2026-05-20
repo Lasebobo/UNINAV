@@ -168,10 +168,11 @@ export function detectLocationIntent(query: string): LocationIntent {
 // ---------------------------------------------------------------------------
 
 export const processQuery = async (
-  userQuery: string, 
+  userQuery: string,
   history: Message[] = [],
   customLocations: CampusLocation[] = [],
-  userLocation?: { lat: number, lng: number }
+  userLocation?: { lat: number, lng: number },
+  onProgress?: (info: { phase: 'osrm' | 'google' | 'done' | 'failed'; attempt?: number }) => void
 ): Promise<{ answer: string; context: string[]; groundingMetadata?: any; suggestedLocationId?: string; directionsPayload?: DirectionsPayload; isDescriptionMode?: boolean }> => {
   
   const lowerQuery = userQuery.toLowerCase();
@@ -411,7 +412,7 @@ Question: ${userQuery}`;
     let directionsPayload: DirectionsPayload | undefined;
 
     if (origin && destination) {
-      const { osrmRoute, googleRoute } = await fetchBothRoutes(origin, destination);
+      const { osrmRoute, googleRoute } = await fetchBothRoutes(origin, destination, onProgress);
       directionsPayload = {
         locationId:   suggestedLocationId ?? '',
         locationName: destLoc?.name ?? userQuery,
@@ -464,7 +465,7 @@ Question: ${userQuery}`;
 
     let navPayload: DirectionsPayload | undefined;
     if (navOrigin && navDestCoords) {
-      const { osrmRoute, googleRoute } = await fetchBothRoutes(navOrigin, navDestCoords);
+      const { osrmRoute, googleRoute } = await fetchBothRoutes(navOrigin, navDestCoords, onProgress);
       navPayload = {
         locationId:   navLocationId ?? '',
         locationName: navDest?.name ?? 'your destination',

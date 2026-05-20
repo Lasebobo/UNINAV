@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Message, CampusLocation } from './types';
-import { processQuery } from './services/ragService';
+import { processQuery, detectLocationIntent } from './services/ragService';
 import { ChatMessage } from './components/ChatMessage';
 import { InputArea } from './components/InputArea';
 import { CampusMap } from './components/CampusMap';
@@ -48,6 +48,7 @@ const App: React.FC = () => {
   const [locations, setLocations] = useState<CampusLocation[]>(CAMPUS_DATA.locations);
   
   const [isLoading, setIsLoading] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(true);
   const [activeDestination, setActiveDestination] = useState<CampusLocation | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | undefined>(undefined);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -147,14 +148,69 @@ const App: React.FC = () => {
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
+    // Detect direction intent locally so we can present loading UI immediately
+    const intent = detectLocationIntent(text);
+
+    // If directions, insert a persistent loading message and update it via onProgress
+    let loadingMsgId: string | undefined;
+    if (intent === 'directions') {
+      loadingMsgId = generateId();
+      const loadingMsg: Message = {
+        id: loadingMsgId,
+        role: 'bot',
+        content: 'Getting directions...',
+        timestamp: Date.now(),
+        directionsStatus: 'loading',
+        directionsRetryCount: 0
+      };
+      setMessages(prev => [...prev, loadingMsg]);
+    }
+
+    let interimSpoken = false;
+
     try {
-      const { answer, context, groundingMetadata, suggestedLocationId, directionsPayload, isDescriptionMode } = await processQuery(text, messages, locations, userLocation);
+      const { answer, context, groundingMetadata, suggestedLocationId, directionsPayload, isDescriptionMode } = await processQuery(
+        text,
+        messages,
+        locations,
+        userLocation,
+        (info) => {
+          // onProgress callback from routeService during retries
+          if (!loadingMsgId) return;
+          setMessages(prev => prev.map(m => {
+            if (m.id !== loadingMsgId) return m;
+            const updated: Message = { ...m };
+            if (info.phase === 'osrm' || info.phase === 'google') {
+              updated.directionsStatus = info.attempt && info.attempt > 1 ? 'retrying' : 'loading';
+              updated.directionsRetryCount = info.attempt ?? (m.directionsRetryCount ?? 0);
+              updated.content = (info.attempt && info.attempt > 1) ? 'Network is slow, retrying...' : 'Getting directions...';
+
+              // Speak one-time interim phrase when retries begin (first time attempt > 1)
+              if ((info.attempt ?? 0) > 1 && !interimSpoken) {
+                interimSpoken = true;
+                if (voiceMode) speakResponse('Give me a moment, loading your directions.');
+              }
+            } else if (info.phase === 'done') {
+              updated.directionsStatus = undefined;
+            } else if (info.phase === 'failed') {
+              updated.directionsStatus = 'error';
+              updated.content = 'Unable to load directions.';
+            }
+            return updated;
+          }));
+        }
+      );
 
       if (suggestedLocationId) {
           const loc = locations.find(l => l.id === suggestedLocationId);
           if (loc) {
               setActiveDestination(loc);
           }
+      }
+
+      // Remove the loading message (if present) and append final bot message
+      if (loadingMsgId) {
+        setMessages(prev => prev.filter(m => m.id !== loadingMsgId));
       }
 
       const botMsg: Message = {
@@ -169,10 +225,33 @@ const App: React.FC = () => {
         isDescriptionMode,
       };
 
+      // If this was a directions request and both engines failed, mark as error and provide fallback content
+      if (intent === 'directions' && (!directionsPayload || (!directionsPayload.osrmRoute && !directionsPayload.googleRoute))) {
+        const locName = suggestedLocationId ? (locations.find(l => l.id === suggestedLocationId)?.name ?? 'your destination') : 'your destination';
+        botMsg.content = `I couldn't load directions right now. Tap **View on Map** to navigate to **${locName}**.`;
+        botMsg.directionsStatus = 'error';
+      }
+
       setMessages(prev => [...prev, botMsg]);
+
+      // Voice: on success, speak the first step if directions present
+      if (directionsPayload && voiceMode) {
+        const activeRoute = directionsPayload.osrmRoute ?? directionsPayload.googleRoute;
+        const firstStep = activeRoute?.steps?.[0]?.instruction;
+        if (firstStep) speakResponse(firstStep);
+      }
+
+      // If final failure (no routes), speak concise failure message
+      if ((!directionsPayload || (!directionsPayload.osrmRoute && !directionsPayload.googleRoute)) && intent === 'directions' && voiceMode) {
+        speakResponse("I couldn't load directions due to a network issue. Please check your connection and try again.");
+      }
 
     } catch (error) {
       console.error(error);
+      // Remove loading message if present
+      if (loadingMsgId) {
+        setMessages(prev => prev.filter(m => m.id !== loadingMsgId));
+      }
       const errorMsg: Message = {
         id: generateId(),
         role: 'bot',
@@ -183,6 +262,17 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const speakResponse = (text: string) => {
+    if (!voiceMode || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v => v.lang.includes('en-US') && v.name.toLowerCase().includes('google')) || voices[0];
+    if (preferred) utterance.voice = preferred;
+    utterance.rate = 1.05;
+    window.speechSynthesis.speak(utterance);
   };
 
   const handleLocationSelect = (loc: CampusLocation | null) => {
@@ -447,11 +537,9 @@ const App: React.FC = () => {
                                 onViewMap={() => {
                                     if (msg.suggestedLocationId) {
                                         const loc = locations.find(l => l.id === msg.suggestedLocationId);
-                                        if (loc) {
-                                            setActiveDestination(loc);
-                                            setActiveTab('map');
-                                        }
+                                        if (loc) setActiveDestination(loc);
                                     }
+                                    setActiveTab('map');
                                 }}
                             />
                         ))}
