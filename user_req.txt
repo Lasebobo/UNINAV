@@ -1,0 +1,85 @@
+<USER_REQUEST>
+The auto-advance navigation mode currently moves to the next step 
+immediately after the previous step finishes being read aloud. 
+This is wrong. It should work exactly like Google Maps — the next 
+step is only announced when the user is physically approaching 
+that maneuver point, not when the previous step finishes speaking.
+
+─────────────────────────────────────────
+1. LOCATION-BASED STEP ADVANCEMENT
+─────────────────────────────────────────
+When "Start Navigation" is active:
+
+- Watch the user's real-time position using 
+  navigator.geolocation.watchPosition() with high accuracy enabled:
+  { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
+
+- Each step has a target point — the END coordinate of that step's 
+  segment in the OSRM route geometry. Store these coordinates when 
+  the route is first loaded.
+
+- On every position update, calculate the distance between the 
+  user's current location and the target point of the CURRENT step 
+  using the Haversine formula.
+
+- When that distance drops below 30 metres:
+  (a) Read the NEXT step instruction aloud 
+      ("Turn left onto Road 1")
+  (b) Highlight the next step in the UI
+  (c) Start watching distance to the NEXT step's target point
+  (d) Do NOT advance until distance to next target is also < 30m
+
+- For the very first step when navigation starts:
+  Read it aloud immediately since the user is already at the start.
+
+─────────────────────────────────────────
+2. EARLY WARNING ANNOUNCEMENT
+─────────────────────────────────────────
+When the user is within 80 metres of the next maneuver point, 
+announce a preview of the upcoming instruction in this format:
+
+  "In [distance], [next instruction]"
+  e.g. "In 30 metres,
+<truncated 2516 bytes>
+N STATE MANAGEMENT
+─────────────────────────────────────────
+Track these in React state or a ref:
+- isNavigating: boolean
+- currentStepIndex: number
+- watchId: number (from watchPosition, needed to clear it)
+- hasAnnouncedWarning: boolean (reset to false on each step advance)
+
+When "Stop Navigation" is tapped:
+- Call navigator.geolocation.clearWatch(watchId)
+- Call speechSynthesis.cancel()
+- Reset all state to defaults
+- Remove all step highlights
+
+─────────────────────────────────────────
+7. FALLBACK — IF LOCATION IS UNAVAILABLE
+─────────────────────────────────────────
+If navigator.geolocation.watchPosition() fails or the user 
+denies location permission during navigation:
+- Fall back to the previous behaviour (advance on speech end)
+- Show a banner: "Live navigation unavailable — advancing 
+  steps automatically"
+- Do not crash or freeze
+
+─────────────────────────────────────────
+8. APPLY TO BOTH TEXT AND VOICE CHAT
+─────────────────────────────────────────
+This location-based advancement applies whether directions 
+were triggered by text or voice input. The same 
+navigationController handles both cases.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-05-20T11:47:59+01:00.
+
+The user's current state is as follows:
+Active Document: /Users/mac/Downloads/uninav---campus-rag-chatbot--implement/App.tsx (LANGUAGE_TSX)
+Cursor is on line: 1
+Other open documents:
+- /Users/mac/Downloads/uninav---campus-rag-chatbot--implement/App.tsx (LANGUAGE_TSX)
+Running terminal commands:
+- npm run dev (in /Users/mac/Downloads/uninav---campus-rag-chatbot--implement, running for 23m21s)
+</ADDITIONAL_METADATA>

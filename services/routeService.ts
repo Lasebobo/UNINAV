@@ -20,6 +20,7 @@ export interface RouteStep {
   distance: string;      // e.g. "120 m"
   duration: string;      // e.g. "2 mins"
   maneuver: string;      // e.g. "turn-left" | "" for straight
+  target?: LatLng;       // The end coordinate of this step, used for location-based auto-advance
 }
 
 export interface RouteResult {
@@ -152,11 +153,21 @@ async function fetchOsrmRoute(
     const steps: RouteStep[] = (leg.steps ?? []).map((step: any) => {
       const stepDistance = step.distance ?? 0;
       const calculatedDuration = stepDistance / WALKING_SPEED_M_S;
+      
+      let target: LatLng | undefined = undefined;
+      const coords = step.geometry?.coordinates;
+      if (coords && coords.length > 0) {
+        // OSRM coordinates are [lng, lat]
+        const last = coords[coords.length - 1];
+        target = { lat: last[1], lng: last[0] };
+      }
+
       return {
         instruction: buildOsrmInstruction(step),
         distance:    formatDistance(stepDistance),
         duration:    formatDuration(calculatedDuration),
         maneuver:    step.maneuver?.type ?? '',
+        target
       };
     });
 
@@ -222,4 +233,78 @@ export async function fetchGoogleRoute(
     console.error('[routeService] Failed to fetch route:', err);
     return null;
   }
+}
+
+/** Direct call to the /api/route Google Maps proxy — no campus-check branching */
+async function fetchGoogleProxyRoute(
+  origin: LatLng,
+  destination: LatLng
+): Promise<RouteResult | null> {
+  try {
+    const url = `/api/route?originLat=${origin.lat}&originLng=${origin.lng}&destLat=${destination.lat}&destLng=${destination.lng}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn('[routeService] Google proxy HTTP error:', res.status, res.statusText);
+      return null;
+    }
+    const data = await res.json();
+
+    if (data.error || !data.polyline) {
+      console.warn('[routeService] Google proxy returned no route:', data.error ?? data.status ?? 'no polyline');
+      return null;
+    }
+
+    const polyline = decode(data.polyline).map(([lat, lng]: [number, number]) => ({ lat, lng }));
+    const steps: RouteStep[] = (data.steps ?? []).map((s: any) => {
+      let target: LatLng | undefined = undefined;
+      // Google API usually provides end_location for steps:
+      if (s.end_location) {
+        target = { lat: s.end_location.lat, lng: s.end_location.lng };
+      }
+      return {
+        instruction: stripHtml(s.instruction),  // keep real Google street names for this view
+        distance:    s.distance ?? '',
+        duration:    s.duration ?? '',
+        maneuver:    s.maneuver ?? '',
+        target
+      };
+    });
+
+    console.log('[routeService] Google proxy route OK —', data.totalDistance, '/', data.totalDuration);
+    return {
+      polyline,
+      steps,
+      totalDistance: data.totalDistance ?? '',
+      totalDuration: data.totalDuration ?? '',
+      startAddress:  data.startAddress  ?? '',
+      endAddress:    data.endAddress    ?? '',
+    };
+  } catch (err) {
+    console.warn('[routeService] fetchGoogleProxyRoute failed:', err);
+    return null;
+  }
+}
+
+/**
+ * Fetches OSRM (campus road labels) and Google Maps (street names) routes
+ * **in parallel** via Promise.allSettled so one failure never blocks the other.
+ *
+ * Both results are stored; the UI toggle swaps between them without re-fetching.
+ */
+export async function fetchBothRoutes(
+  origin: LatLng,
+  destination: LatLng
+): Promise<{ osrmRoute: RouteResult | null; googleRoute: RouteResult | null }> {
+  console.log('[routeService] fetchBothRoutes →', origin, '→', destination);
+
+  const [osrmResult, googleResult] = await Promise.allSettled([
+    fetchOsrmRoute(origin, destination),
+    fetchGoogleProxyRoute(origin, destination),
+  ]);
+
+  const osrmRoute   = osrmResult.status   === 'fulfilled' ? osrmResult.value   : null;
+  const googleRoute = googleResult.status === 'fulfilled' ? googleResult.value : null;
+
+  console.log('[routeService] osrm:', osrmRoute ? '✓' : '✗ failed', '| google:', googleRoute ? '✓' : '✗ failed');
+  return { osrmRoute, googleRoute };
 }

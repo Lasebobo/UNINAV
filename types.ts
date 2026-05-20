@@ -1,3 +1,19 @@
+import type { RouteResult } from './services/routeService';
+
+/**
+ * Holds both routing engine results so the UI can toggle between
+ * OSRM campus-road view and Google Maps street-name view without a
+ * second API call.
+ */
+export interface DirectionsPayload {
+  locationId: string;
+  locationName: string;
+  /** On-campus OSRM route (may be null if OSRM failed) */
+  osrmRoute: RouteResult | null;
+  /** Google Maps route via /api/route proxy (may be null if off-campus or API failed) */
+  googleRoute: RouteResult | null;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'bot';
@@ -6,6 +22,10 @@ export interface Message {
   retrievedContext?: string[]; // To show what the RAG system found
   groundingMetadata?: any; // For Maps/Search links
   suggestedLocationId?: string; // Optional suggested location pointer
+  /** Present when the message is a MODE B directions response */
+  directionsPayload?: DirectionsPayload;
+  /** True for MODE A messages — renders "Get Directions" button */
+  isDescriptionMode?: boolean;
 }
 
 export interface CampusLocation {

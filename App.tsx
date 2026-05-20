@@ -125,10 +125,6 @@ const App: React.FC = () => {
             setLocationError("An unknown location error occurred.");
             break;
         }
-        // Fallback to default coordinating so the map doesn't break
-        if (!userLocation) {
-          setUserLocation(OAU_MAIN_GATE);
-        }
       },
       {
         enableHighAccuracy: true,
@@ -152,7 +148,7 @@ const App: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const { answer, context, groundingMetadata, suggestedLocationId } = await processQuery(text, messages, locations, userLocation);
+      const { answer, context, groundingMetadata, suggestedLocationId, directionsPayload, isDescriptionMode } = await processQuery(text, messages, locations, userLocation);
 
       if (suggestedLocationId) {
           const loc = locations.find(l => l.id === suggestedLocationId);
@@ -168,7 +164,9 @@ const App: React.FC = () => {
         timestamp: Date.now(),
         retrievedContext: context,
         groundingMetadata,
-        suggestedLocationId
+        suggestedLocationId,
+        directionsPayload,
+        isDescriptionMode,
       };
 
       setMessages(prev => [...prev, botMsg]);
@@ -194,7 +192,12 @@ const App: React.FC = () => {
   const handleGetDirections = (loc: CampusLocation) => {
     setActiveDestination(loc);
     setActiveTab('chat');
-    processUserRequest(`Tell me about ${loc.name} and how to get there.`);
+    processUserRequest(`How do I get to ${loc.name}?`);
+  };
+
+  /** Called from a Mode A chat bubble's "Get Directions" button */
+  const handleChatGetDirections = (locationName: string) => {
+    processUserRequest(`How do I get to ${locationName}?`);
   };
 
   const clearHistory = () => {
@@ -440,6 +443,7 @@ const App: React.FC = () => {
                                 key={msg.id} 
                                 message={msg} 
                                 locations={locations}
+                                onGetDirections={handleChatGetDirections}
                                 onViewMap={() => {
                                     if (msg.suggestedLocationId) {
                                         const loc = locations.find(l => l.id === msg.suggestedLocationId);

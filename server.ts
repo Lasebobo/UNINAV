@@ -134,6 +134,27 @@ async function startServer() {
         currentModel = model;
 
         const messages: any[] = [];
+
+        /**
+         * SYSTEM INSTRUCTION POLICY (enforced by ragService.ts)
+         * -------------------------------------------------------
+         * The systemInstruction passed in options is set by ragService.ts
+         * per-call and enforces the following strict rules for ALL model types:
+         *
+         * MODE A (description queries — "where is X"):
+         *   - 3 sentences max: what it is / campus position / one detail.
+         *   - NEVER generate walking steps or directions.
+         *
+         * MODE B (directions — "how do I get to X"):
+         *   - Direction steps ALWAYS come from the routing engine (OSRM / Google Maps).
+         *   - NEVER generate, estimate, or invent steps, distances, or times.
+         *   - If routing fails: prescribed fallback message only.
+         *
+         * ALL MODES:
+         *   - NEVER display raw lat/lng coordinates.
+         *   - NEVER mention landmarks not in the campus knowledge base.
+         *   - NEVER mention bus stops / transport points not in campus data.
+         */
         if (options.systemInstruction) {
           messages.push({ role: 'system', content: options.systemInstruction });
         }
