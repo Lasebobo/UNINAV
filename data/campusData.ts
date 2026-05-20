@@ -7,16 +7,6 @@ import { KnowledgeBase } from '../types';
 const RAW_CAMPUS_DATA = {
   locations: [
     {
-      id: "senate_building",
-      name: "Senate Building",
-      aliases: ["admin block", "vc office", "senate"],
-      type: "facility",
-      description: "The Senate Building is the administrative nerve center of OAU, an iconic architectural masterpiece visible from most parts of campus.",
-      lat: 7.5197,
-      lng: 4.5250,
-      imageUrl: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=600&q=80"
-    },
-    {
       id: "hezekiah_library",
       name: "Hezekiah Oluwasanmi Library",
       aliases: ["library", "hol", "main lib", "main library", "hezekiah library"],
@@ -72,9 +62,9 @@ const RAW_CAMPUS_DATA = {
       aliases: ["awo", "awo hall"],
       type: "residential",
       description: "The legendary male hall of residence, known for its strong 'Aro' culture and political activism.",
-      lat: 7.5130,
-      lng: 4.5300,
-      imageUrl: "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80"
+      lat: 7.522047983886849,
+      lng: 4.515844175862876,
+      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAHQJuTXhwdwFhl7FuTCPDC0XPptTOiJatFfhdbn9zeixXzJZHF3LZBWpsHpzdHuoUxbPZXetSMstbKRbNyJhMx1IYO76RxiZNAzfdH4dPkMRA9mR6Wx7O0t-0UmyqaSpoKix5Hr=s773-k-no"
     },
     {
       id: "pharmacy",
@@ -94,7 +84,7 @@ const RAW_CAMPUS_DATA = {
       description: "A prominent open space and transit hub near the academic core, often used as a landmark for navigation and student gatherings.",
       lat: 7.5183,
       lng: 4.5228,
-      imageUrl: "https://images.unsplash.com/photo-1518605368461-1ee738019316?auto=format&fit=crop&w=600&q=80"
+      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAEp1Amj7X-66wKyw2a9_Kc6MFMt_LzFVwgLJFhY12y0TlKZLLsQN37P_CqrU_OwJXBLztTu0EDN_fuwxMI9Sm5Zy6lKKqPV9Okl4LxC85R0M6tTSFz1coTPTCjB55J7ge_WXqbJ=s720-k-no"
     },
     {
       id: "firstbank_lt",
@@ -224,7 +214,7 @@ const RAW_CAMPUS_DATA = {
     {
       id: "oak_park_conference_hall",
       name: "OAK Park Conference Hall",
-      aliases: ["oak park", "oak park conference hall", "conference hall"],
+      aliases: ["oak park conference hall", "oak park"],
       type: "landmark",
       description: "OAK Park Conference Hall is a recognized landmark location.",
       lat: 7.5182477,
@@ -234,7 +224,7 @@ const RAW_CAMPUS_DATA = {
     {
       id: "oduduwa_hall",
       name: "Oduduwa Hall",
-      aliases: ["oduduwa", "oduduwa hall"],
+      aliases: ["oduduwa hall", "oduduwa"],
       type: "landmark",
       description: "Oduduwa Hall is a recognized landmark location.",
       lat: 7.5187366,
@@ -244,7 +234,7 @@ const RAW_CAMPUS_DATA = {
     {
       id: "pit_theatre",
       name: "Pit Theatre",
-      aliases: ["pit", "pit theatre"],
+      aliases: ["pit theatre"],
       type: "landmark",
       description: "Pit Theatre is a recognized landmark location.",
       lat: 7.521662699999999,
@@ -252,19 +242,9 @@ const RAW_CAMPUS_DATA = {
       imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-vwMsajx-sxcuFUCtqIa0brhkY9F2zoQIxrZlOUrSvk3g8d5SYgeuw0nJWVK34K231PObPFqsgEt3UpVxElu9hzmDPszaWDhq2hfAqlSipB8jUrTqaY-xPCyQZ3JINcI_uEatjf3S_rGWtAyccU0N5KjP1Q0RHTrS9XzFjZsqZ2rsXlbj2iVtWbeTTjR6xPXOOLdUMXtZrTsFTGgO4SxtLdv5QpUsvP1ao5_Qx6UB4oOvGeNSJho0Kpp9kLKjuA6B1ZdWrQ4Krd2SiNicQx-xnChpPJh38aZnLpSsaeINcqwRT7UHv_jd5d6Gr4-65xDaJWo_71pYoikIiNjO87rK66vuk5ISl5e25YjHFtlF-wYzOjCuumY2uX7e8RrD8vo2hlhjzq7CouwubzjFxQj3R30YJHCExeZxs-NDmjkIZ6Ww&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
     },
     {
-      id: "as_e_dey_hot",
-      name: "As E Dey Hot",
-      aliases: ["as e dey hot", "e dey hot"],
-      type: "custom",
-      description: "As E Dey Hot is a commercial location offering food and hospitality services.",
-      lat: 6.4769894,
-      lng: 3.5783755,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-sGLHYHhKO8QXEZuV_uTXVZLC8wlg_Bi9G0NjoKdTL3CQEvuPT5hKnXpgyxiUjJO34NSWPZQi2Id4v26Es6EzE5q-MZkD74Ls-IFl02tBRoc4ryVlbGAO6QdDY2iRcEd6SNi8aJexRk2UZeUVjuNfWfSd6QhkfWGv_mtlSQPR1dGCJlMRDJzdWNw61wAQLKExc2AEQfMxdQ7QfCOYwD5RHlN-FfFzCN6JJGcov543QjzVT5fIYtcyNYGPC5RpNWiF4dGsB3u6mcDLC3JzQvBvbopM1LO7YMzZbgEQz6hYlH4UHVIB7D_eHQj3m9hJC04H6cixspNKJFfW-5xgoAL9BuCORBc2Ed1YyE9QpxYQYIdf-VF-6bO-i5I7X7mPIF1nGtHSaipgxFbSZxzWlDGHsAZEfT6_xcvqkVAGL0eFC7klpN&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
-    },
-    {
       id: "admin_extention",
       name: "Admin Extention",
-      aliases: ["admin extension", "admin extention"],
+      aliases: ["admin extention", "admin extension"],
       type: "landmark",
       description: "Admin Extention is a recognized landmark location.",
       lat: 7.521569999999999,
@@ -274,37 +254,27 @@ const RAW_CAMPUS_DATA = {
     {
       id: "adekunle_fajuyi_hall_obafemi_awolowo_university",
       name: "Adekunle Fajuyi Hall, Obafemi Awolowo University",
-      aliases: ["fajuyi", "fajuyi hall", "faj"],
+      aliases: ["adekunle fajuyi hall", "fajuyi hall", "faj"],
       type: "residential",
       description: "Adekunle Fajuyi Hall, Obafemi Awolowo University is a recognized landmark location.",
       lat: 7.517677,
       lng: 4.5176115,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-szqX-Yw-Ll01J2CHEfg7WR8AefYekRzIP3lnmJeNRapCrNRgKuPZkrrip7Sncf7NDWZE3P6KhvFBbD91e26aNDG2cDbo8BvhusssBVfjDkYML-CHPuwYU3QWtNQT_hi3VGA2z937yFIGRjS1Z0jYCI_pUmbfM4NYbKq90bfWyFqPeTmBOBy9BCbVgHgi8zR3IpD8b50WiFNWp4WUcaoFq67P9FGEEc4o4QCOFiqBdNrUQ5m0aXVcxH08qW0MLVUDJ7ozvkq97E1tC5QRoqker_JNjM1mkvNMyy9EMWYIlsIw&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAF4hU7A_zQaULI1OVubUZydJvVWiR5NDLL4wCVReGyZk3xFWVtrosYh_UdaA1HiNHQGM7wmLraE3Z0HidOx65-r5thWdkhXo4dLYdy-ncQbFOEB8ZjC0szDgGR3Y3Q6buv1x6d-=s773-k-no"
     },
     {
-      id: "akintola_sports_hostel",
-      name: "Akintola Sports Hostel",
-      aliases: ["akintola", "sports hostel", "akintola hall"],
+      id: "akintola_hostel",
+      name: "Akintola Hostel",
+      aliases: ["akintola hostel", "akintola hall", "akintola"],
       type: "residential",
-      description: "Akintola Sports Hostel is a recognized landmark location.",
+      description: "Akintola Hostel is a female hostel beside the sports complex.",
       lat: 7.5170083,
       lng: 4.5198364,
       imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-t4g_1yHyyhEdD9sDdinUsZDCfCoU2LGRvNLw8SOpHsRU7p5qPge4yMLLqzkJMI-8Vf5YRJKZ8kk2V9l0vffJeLs8_p3RgD-Ns7Dy2APNYocoeB4QijfvXj8z0jQkL-dZ4vNQDAoHrJ-c4AWX_ALJGDSRPu7fF4dSZLAR01BD0qPNfaPtLj1raoJRMh_-Qz5OpNDE_FUxdTnTNGLtq9YcPGAOvpu1LBc6kGmSVwVGTg2RM2Y2-R5Xw-UuP8YklOE-yB8GD2YHzbNeaAgs7BePdNzHQWysA1bczrJjeriYpW77KUqsgmdiaamsMR18ezsJf1UAvjQoRQ7GgVKzK9NsXu_sJIOeSNDGNk57gn6Bq3M3MvRsj6EPMt8GZ5m54gCdlO0Cizbvy1LzEfgOAswmv7WFxsTQTKVHRa1iLijIJ6QM75&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
     },
     {
-      id: "lagos_state_college_of_health_technology",
-      name: "Obafemi Awolowo College of Health Technology",
-      aliases: ["college of health technology", "health tech"],
-      type: "academic",
-      description: "Obafemi Awolowo College of Health Sciences is an academic facility within the university environment.",
-      lat: 6.509330800000001,
-      lng: 3.3725602,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAGama5nszA6KDdd-VpNH_wQrNB4NpkroUEF30B8vZGf1vUtKE9yuoh0nhs-U9S8bDNt0UA3dGrJxF8ixLJLs7pivVwqsRw-rf-ZXMJD0otJ36a8aft8RDgpJTzlWlywrrqK90d7=w203-h152-k-no"
-    },
-    {
       id: "awovarsity_hall",
       name: "Awovarsity Hall",
-      aliases: ["awovarsity", "awovarsity hall"],
+      aliases: ["awovarsity hall", "awovarsity"],
       type: "landmark",
       description: "Awovarsity Hall is a recognized landmark location.",
       lat: 7.513338899999999,
@@ -314,36 +284,16 @@ const RAW_CAMPUS_DATA = {
     {
       id: "cooperative_hall",
       name: "Cooperative Hall",
-      aliases: ["cooperative hall", "cooperative"],
+      aliases: ["cooperative hall"],
       type: "landmark",
       description: "Cooperative Hall is a recognized landmark location.",
       lat: 6.5016659,
       lng: 3.3293769
     },
     {
-      id: "obafemi_awolowo_university_zoological_garden",
-      name: "Obafemi Awolowo University, Zoological Garden",
-      aliases: ["zoo", "zoological garden", "oau zoo"],
-      type: "landmark",
-      description: "Obafemi Awolowo University, Zoological Garden is a recognized landmark location.",
-      lat: 7.4428749,
-      lng: 3.8947627,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-vmbP_iktJi6uyxBt-16zP_xYaUnTjURjcr025YR79sr4ppqZMJWwDQky5lOtQbnhtcJeyLK8CzFQQhIIW7MFzBBoHW_7t01xTD3r7R3OBjX1jP0DreiNPE9mS1_BW2Ib6G0qeV6g4F-GlXwZVigvpwDHUvsPjhm8KrNK47CVq_fk_phs5JRzjJ36eq3_VCGBvSMBSYxdEjC99yJdNBxWWL7Q_tvS4VDcH08_iSqwozbfaX6_VJvKQulKh1ohJQ0pHzkvZPXhrWGs2aqrCmZhfmy3HJkojdUZMB5kkHVfMZpxQkuNy1SZDF6T-gIkqJqXvGzljSHJ9ibd2QnnyeogoZpivQUkVDS-IkxWO4NiPNbcQoazbmjIqTSWTxFzNGIecQDMWWg5eLGMzf63LHC2lv_we-cW2toXN7ERKNtabLCA&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
-    },
-    {
-      id: "biological_garden_obafemi_awolowo_university",
-      name: "Biological Garden, University of Lagos",
-      aliases: ["biological garden", "unilag zoo", "unilag biological garden"],
-      type: "landmark",
-      description: "Biological Garden, University of Lagos is a recognized landmark location.",
-      lat: 6.5184843,
-      lng: 3.4007376,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-s3mfzse4Q105U1mprFS3yqTlOahInegtDFMkNywUQedhhi-wOyPFwJfAAoFUyFEcAXIRvaD8iDR8Ok6vxeee0Rh13l2vWdWhqpthPQQUPL6tQUv5FTQmJ1svK3SK8oFkUTHU_e_kIYpNhkcydTGjmbyuT4h8ut5qc9Bee3jFX7E1HrYWTPD-SOXKoV2ikELO1WnwzRSFASmaaA-jXBWxsPZGmmdvI25Wit7cBwln5zrb6Rb1TQF5G5GkFQEO8eUr_gmuMHp7uTIfGqWVKLnMJsjZBPthGW3NsyO0CPTAq6JqqxJlGCiFKgzqUcRewMIIIDKTJEfCkUWg57eOYreNDDwIzo8w4an_fnaaC4rpsTrDpkzbA712uB39Z9uymd0i_ofkrqRcvuBFoaxzcz5wPawdA9aQinnbuRoiCa_fTCY2nD&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
-    },
-    {
       id: "alex_duduyemi_lecture_theater",
       name: "Alex Duduyemi Lecture Theater",
-      aliases: ["alex duduyemi", "duduyemi", "duduyemi lecture theater"],
+      aliases: ["alex duduyemi lecture theater"],
       type: "landmark",
       description: "Alex Duduyemi Lecture Theater is a recognized landmark location.",
       lat: 7.5238741,
@@ -353,13 +303,94 @@ const RAW_CAMPUS_DATA = {
     {
       id: "ajose_lecture_theatre",
       name: "Ajose Lecture Theatre",
-      aliases: ["ajose", "ajose lecture theatre", "ajose LT"],
+      aliases: ["ajose lecture theatre", "ajose"],
       type: "landmark",
       description: "Ajose Lecture Theatre is a recognized landmark location.",
       lat: 7.5213991,
       lng: 4.5265529,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-uh1y1wjyVtleq0o8KQVeOorwyP1vpTjB3x75BqrUxghOSv7dPOi2m3BCcDSKt5KLYQnobQxpNfRGnfaYb_F7zBpZxNR5vy86vcRRLBKAfkO9PqH2DgIsaJ7U8rN8JHpk7ziPtpIyXNFqQcROxJNnmGjDEQNKZM5_g01uZWQinm78CVd4pOWfYQ44hWZb1AzA8sLwO3PIfPvRZj2k6zEWlKiwxbvUwjCo3tPd88ahH9i7CBCEDzJvk9Bcjj78mqrzKSyPLuEdU55LJC1UVbLceYxLy5YHxMeZX0KCM8mlf5Dqki2B7E94-WXiDVJdpljpLakdItLFISO87BUjWiswoUuj3CNZc1CCWag7M7-siDTyXiwfbFHSeqlkmjMEhOA2rRa9lDJEyXqD93RuID_5SZbYeTNdP5QgDKGrxh84mp1l8&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAF1OVeloEihygOQ9vsfQel6zkTcoWb_sTJUC0GrETNDq72GJjlTnYYUdjuSH9gx6hD85xvzzA5BHYI7gccKu5M32a8gXqm-QwVhtnwU5Zfs8XOqFNnp4RhxBnV6Ld7qDRN61xvx=s1031-k-no"
     },
+    {
+      id: "oau_sports_complex",
+      name: "OAU Sports Complex",
+      aliases: ["sports complex", "sport centre", "the complex", "main bowl", "OAU stadium"],
+      type: "sports",
+      description: "A comprehensive multi-sport facility established alongside the university in the early 1960s, centrally located on the OAU campus near the SUB building and Bank area. It houses a certified 8-lane tartan athletics track, standard football pitch, Olympic-size swimming pool, indoor courts for basketball, volleyball, badminton and table tennis, tennis courts, a squash court, gymnasium, and a cricket field — serving as a training ground for NUGA Games and numerous national-level athletes.",
+      coords: { x: 0, y: 0 },
+      lat: 7.5166215651268224,
+      lng: 4.520955876730226,
+      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAF0fr5Uke3U2nXLA_ZdMazrHKbVKyX9WiFeqhQuq7qUG_hCsFJjzkzy0XXajyeRMh2HqUPbsi_sVuUBCvIyGQKZq7-qBlQarBH4gyiU1wkB8TwxNa6JzMdenBThAqSQPLeAR5Y=s901-k-no"
+    },
+    {
+      id: "ojaja_hostel",
+      name: "Ojaja Hostel",
+      aliases: ["ojaja hostel", "ojaja hall", "ojaja"],
+      type: "residential",
+      description: "Ojaja Hostel is a recognized landmark location.",
+      lat: 7.517415,
+      lng: 4.509251700000001,
+      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-uGKqZdZX5p6_UN-_EYlMkRKQ7N3ypUF2_TUInNFT7AcV9m_9wg0-bCpR962tUMziEr3hHJHaBL2E7hjll1W9t2HmDuOwbc4PhJy9FnKuBo5hwCwCh0N0Vgs5pbN1xrsPQ-zZ-zLyCrjZWZyn9Al7J4BiyyqU6A2hhgnGdkjfrtF8z0Io0XWqP6hPIYRwGmMYnYJsIBcpXOTEueXJtwYsW9M6dRnXG8BKcidynysiuXCrAPWeKJM-J1ZgIvJvylE6vPBx6_foZ8LS00pSSR5fJMC8RVfGW1W7bN_AdpV-N45Oo6RhyuZqHRswvv0Rl_uoE_Koch9uppYAuRH7Ll_VdrphP9NG9eigg2CMESBfk8Pu6Z2I1d3cFB5rxhFgTde0ooAqdENhRIQeS4kZADayWBR_c38cqum5qDF_vvuLSccFwjNziIsA&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+    },
+    {
+      id: "mozambique_hall_obafemi_awolowo_university",
+      name: "Mozambique Hall, Obafemi Awolowo University",
+      aliases: ["mozambique hall", "moz", "mozambique"],
+      type: "residential",
+      description: "Mozambique Hall, Obafemi Awolowo University is a recognized landmark location.",
+      lat: 7.522280599999999,
+      lng: 4.514088999999999,
+      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAGYC41B4eljZ9IRQ6YqK9JsqWkk7yD44HiP7I-NE6OVvebLKw2aYM0PilOebnbBS-M7PnJOt-TB1u5x_qWAy_16s00LpOyWfVJWab5Hvt6_H7IEjuYTxttyL0OecAvjriAbj3Javv_sk9w=s773-k-no"
+    },
+    {
+      id: "basketball_court_oau_ife",
+      name: "Basketball court OAU Ife",
+      aliases: ["basketball court"],
+      type: "facility",
+      description: "Basketball court OAU Ife is a recognized landmark location.",
+      lat: 7.523088700000001,
+      lng: 4.514238199999999,
+      imageUrl: ""
+    },
+    {
+      id: "angola_hall_obafemi_awolowo_university",
+      name: "Angola Hall, Obafemi Awolowo University",
+      aliases: ["angola hall", "angola"],
+      type: "residential",
+      description: "Angola Hall, Obafemi Awolowo University is a recognized landmark location.",
+      lat: 7.521747299999999,
+      lng: 4.5123356,
+      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFihF-Te9GIMn3lGoJGxZYCrTcxTqBev-7yx4mRCA1KDwtrIeUUY0DGzMlgYIaOcSRMbXHKCg9En2g9yplbKDPebi8AUpJC9GgPk8hXrnIrfibufWOOATTqPAyewqxuUNeOg29t=s901-k-no"
+    },
+    {
+      id: "new_senate_building",
+      name: "New Senate Building",
+      aliases: ["new senate building", "new senate", "Senate building"],
+      type: "landmark",
+      description: "New Senate Building is a recognized landmark location.",
+      lat: 7.518702892841351,
+      lng: 4.524234160623102,
+      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFtlU0qPgC7aj1HSg_6TUWb6zXGoFi3rAAsJg9FDJdf5UQiRpVf0w62UBJQql7WkpJrFYCXDuC7dfKYJK4qthICCVbXfGpixRuMyHXUH4zqgOuN6RGfXjL0wOIGdo0sQvKRM2rq-w=s812-k-no"
+    },
+    {
+      id: "biological_science_area_faculty_of_sciences_obafemi_awolowo_university",
+      name: "Biological Science Area, Faculty of Sciences",
+      aliases: ["biological science area", "biological sciences"],
+      type: "academic",
+      description: "Biological Science Area, Faculty of Sciences, Obafemi Awolowo University is an academic facility within the university environment.",
+      lat: 7.518968399999999,
+      lng: 4.525836099999999,
+      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-vXFzSyIER2nz60tzi6Kjn0otq2tkTY_4VATaDesOgEC7pFaDKcWqYpy5iS-SlAUDhcPFutwFVceBjY2r-88Ciddd7hQK3qEB0rNG4_M4biKn4Z4XBM7PX8NnPoutin2T3xL-aKfJCB2L5PW9yd65jRLMLb7QVtssbhh39q-EG3NTTJpFwqLVNPwCrz9i25bQrEAmEZoK7ymkYmlFxb6-OFQl0CYJ3wgG4--6Wy2Ceem96DbLFV4bOj3A-aTyMdyD6vU0yOIWgVMq7DsXmPzF-jugW5KuamggKjdsmhF4vnlyix5eXqUPKVuHh4z2gDCZZ0EHxRvUq83u8p4f5iL4cEi11peT1fJOhKfOJowt4hMz0ZfZMe7uIThsTionBcZfJbPAhvNomGjU7uGlTjpXhGNdzQs0nNRMT5nB3_k67u5Q&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+    },
+    {
+      id: "faculty_of_social_sciences_obafemi_awolowo_university",
+      name: "Faculty of Social Sciences, Obafemi Awolowo University",
+      aliases: ["faculty of social sciences", "social sciences"],
+      type: "academic",
+      description: "Faculty of Social Sciences, Obafemi Awolowo University is an academic facility within the university environment.",
+      lat: 7.521239899999999,
+      lng: 4.5225092,
+      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-swvRTmS--7nEAMe5ghB6MpBObomutWpFhih1UT63sX7VyiqQWunHCSis08WpPy5G6rDImVydaKLbVnbJKva31br4Kxs1BCKCaFLC7ty5MfcV2t7mMdYWXe66ROi8T7JX8YsN4NcwCDo2Q5Q_DfkfReAVXLLEKVjS8filxoXQuxJ5r9StNCmyNAeEUGb63r3rAhrs2sY9tQhOxsm51fahwkHW8lmv8DJpt5dRaGKdKAMVnx-WdFu9IHaNlc1tOf4zpaB5u0grc3m0vBgoi7JS9vn-eEHFejTpJ0FOeoJnwfFg&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+    }
   ],
 
   routes: [
