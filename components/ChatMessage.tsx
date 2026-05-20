@@ -26,12 +26,35 @@ const MANEUVER_ICONS: Record<string, string> = {
   'turn-slight-right':'↗',
   'roundabout':      '⟳',
   'depart':          '▶',
-  'arrive':          '⬛',
+  'arrive':          '🟦',
   'straight':        '↑',
 };
 
-function getManeuverIcon(maneuver: string): string {
-  return MANEUVER_ICONS[maneuver] ?? '•';
+function getManeuverIcon(maneuver: string, instruction?: string): string {
+  const key = (maneuver || '').toLowerCase();
+  if (MANEUVER_ICONS[key]) return MANEUVER_ICONS[key];
+
+  // FIRST: use explicit cues from the human-readable instruction when present.
+  // Prioritize explicit "turn left/right" calls over a generic 'head' or 'straight'.
+  if (instruction) {
+    const txt = instruction.toLowerCase();
+    // If instruction explicitly directs a turn, respect it.
+    if (txt.includes('turn right') || txt.includes('turn to the right') || txt.includes('head right')) return MANEUVER_ICONS['turn-right'];
+    if (txt.includes('turn left') || txt.includes('turn to the left') || txt.includes('head left')) return MANEUVER_ICONS['turn-left'];
+    if (txt.includes('roundabout')) return MANEUVER_ICONS['roundabout'];
+    // If instruction explicitly uses straight/continue with no turn mentioned, prefer straight.
+    if ((txt.includes('straight') || txt.includes('continue') || txt.includes('go straight') || txt.includes('keep straight') || txt.includes('head')) && !txt.includes('turn')) return MANEUVER_ICONS['straight'];
+  }
+
+  // If we have a maneuver token (even if not in the map), attempt heuristic mapping
+  if (key) {
+    if (key.includes('left')) return MANEUVER_ICONS['turn-left'];
+    if (key.includes('right')) return MANEUVER_ICONS['turn-right'];
+    if (key.includes('roundabout')) return MANEUVER_ICONS['roundabout'];
+    if (key.includes('straight') || key.includes('continue') || key.includes('depart')) return MANEUVER_ICONS['straight'];
+  }
+
+  return '•';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -133,14 +156,25 @@ const DirectionsPanel: React.FC<{
                   </p>
                 )}
               </div>
-              <span
-                className={`text-base shrink-0 ${
-                  isActive ? 'text-blue-500' : 'text-gray-300'
-                }`}
-                aria-hidden
-              >
-                {getManeuverIcon(step.maneuver)}
-              </span>
+              {(() => {
+                const steps = activeRoute.steps;
+                const icon = i === 0
+                  ? MANEUVER_ICONS['depart']
+                  : i === steps.length - 1
+                    ? MANEUVER_ICONS['arrive']
+                    : getManeuverIcon(step.maneuver, step.instruction);
+                const iconColorClass = icon === MANEUVER_ICONS['arrive']
+                  ? (isActive ? 'text-blue-700' : 'text-blue-600')
+                  : (isActive ? 'text-blue-700' : 'text-blue-600');
+                return (
+                  <span
+                    className={`text-xl font-semibold shrink-0 ${iconColorClass}`}
+                    aria-hidden
+                  >
+                    {icon}
+                  </span>
+                );
+              })()}
             </li>
           );
         })}
@@ -162,7 +196,7 @@ const DirectionsPanel: React.FC<{
             onClick={stopNavigation}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-red-600 border border-red-700 rounded-lg hover:bg-red-700 transition-colors shadow-sm active:scale-95"
           >
-            <Square className="w-3 h-3 fill-current" strokeWidth={2.5} />
+            <Square className="w-3 h-3 fill-blue-100" strokeWidth={2.5} />
             Stop Navigation
           </button>
         )}
@@ -211,12 +245,24 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   });
 
   const locationImg = useMemo(() => {
+    // If the bot provided a suggestedLocationId, prefer that image (existing behavior)
     if (isBot && message.suggestedLocationId) {
       const loc =
         locations.find(l => l.id === message.suggestedLocationId) ||
         CAMPUS_DATA.locations.find(l => l.id === message.suggestedLocationId);
       return loc?.imageData ? `data:image/jpeg;base64,${loc.imageData}` : loc?.imageUrl;
     }
+
+    // If the bot is speaking about OAU as a whole (generic mentions), show the campus gate image
+    if (isBot && !message.suggestedLocationId && !message.suppressGenericOauImage) {
+      const text = (message.content || '').toLowerCase();
+      const isOauGeneric = /\b(obafemi awolowo university|obafemi awolowo|\boau\b|o\.a\.u\b|the university)\b/i.test(text);
+      if (isOauGeneric) {
+        const gate = locations.find(l => l.id === 'campus_gate_bus_stop') || CAMPUS_DATA.locations.find(l => l.id === 'campus_gate_bus_stop');
+        if (gate) return gate.imageData ? `data:image/jpeg;base64,${gate.imageData}` : gate.imageUrl;
+      }
+    }
+
     return null;
   }, [isBot, message.suggestedLocationId, locations]);
 
@@ -349,8 +395,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             </button>
           )}
 
-          {/* View on Map — shown for description messages (not directions, those have it inside the panel) */}
-          {isBot && !isDirectionsMode && onViewMap && (
+          {/* View on Map — only show when the assistant actually suggested a specific location */}
+          {isBot && !isDirectionsMode && suggestedLocName && onViewMap && (
             <button
               id={`view-map-${message.id}`}
               onClick={onViewMap}

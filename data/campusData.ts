@@ -24,7 +24,7 @@ const RAW_CAMPUS_DATA = {
       description: "The Department of Civil Engineering, popularly known as the Spider Building due to its unique structural design.",
       lat: 7.5228467,
       lng: 4.5291902,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAH8427amheTSeT_nx9Sods9L28aCQZ3wL-8HNpgpiiFdd9j3Ef_iLZ6fJkkrULsaIfLrkEY3tFxZcqoF5JjFyggMcbB6OQcbsg0VFl8-r0rtpKvtXxj28XnmqqmgCA_9yh8ys4=w203-h152-k-no"
+      imageUrl: "https://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/spider.jpeg"
     },
     {
       id: "amphi",
@@ -32,8 +32,8 @@ const RAW_CAMPUS_DATA = {
       aliases: ["amphi", "oduduwa hall", "theatre"],
       type: "facility",
       description: "A major venue for student gatherings, shows, and large lectures, located within the Oduduwa Hall complex.",
-      lat: 7.5210,
-      lng: 4.5220,
+      lat: 7.519465202308837,
+      lng:  4.521984748573766,
       imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFu3LF3Bp5fo6Kg7wNKa8Vt8rWLg95UQQPmtyP7vy258_P3WcH-zwe_gswkxef2xUd-Wnz2pSTvas8G98TXBGmjKjFO95RZfYO6F9T25foxKWZ-xtxL180tBAZTYndGKOeb5XE=s773-k-no"
     },
     {
@@ -44,7 +44,7 @@ const RAW_CAMPUS_DATA = {
       description: "The SUB houses the student union offices, a large buttery, and shops. It is the center of student social politics.",
       lat: 7.5169,
       lng: 4.5213,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAGvywORI76kVXhajyeS-MVISzDKN_7g5X397pkxn5w537679IJPWdtLBVBaEPVXdWdJjJ8VhKuTcO0CHQPZXGoH13PUvRAPNlZ5ClwNpU8wWU4FuP8AMmnFtrA42M4kyltL4hQ=s901-k-no"
+      imageUrl: "https://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/SUB.jpghttps://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/SUB.jpg"
     },
     {
       id: "moremi",
@@ -74,7 +74,7 @@ const RAW_CAMPUS_DATA = {
       description: "The Faculty of Pharmacy at OAU is a premier center for pharmaceutical education and research in Nigeria, known for its rigorous academic standards.",
       lat: 7.5174,
       lng: 4.5269,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAF5x1YIB_k47a9BLrcjMCNWsxIHDhzEWlNRg1BssIEQMOsd3WZU_tTtfpb44peAG_HpjlFcof2C5nf4Kkj07eitwHdH0uyGKuI7WuJRI4kj6J6Ro8H3qo4iBqHM9YNgySsmHpt6zg=w408-h544-k-no"
+      imageUrl: "https://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/Pharmacy.jpg"
     },
     {
       id: "motion_ground",
@@ -393,38 +393,39 @@ const RAW_CAMPUS_DATA = {
     }
   ],
 
-  routes: [
-    {
-      id: "r1",
-      fromId: "senate_building",
-      toId: "sub",
-      distance: "600m",
-      timeWalking: "8 mins",
-      shuttleAvailable: true,
-      shuttleFare: "₦50",
-      description: "Walk down Road 1, past the Motion Ground turnoff. The SUB is on your right."
-    },
-    {
-      id: "r2",
-      fromId: "moremi",
-      toId: "spider_building",
-      distance: "1.2km",
-      timeWalking: "15 mins",
-      shuttleAvailable: true,
-      shuttleFare: "₦50",
-      description: "Take a shuttle from Moremi gate to the Science/Tech park."
-    },
-    {
-      id: "r3",
-      fromId: "sub",
-      toId: "amphi",
-      distance: "300m",
-      timeWalking: "4 mins",
-      shuttleAvailable: false,
-      description: "A short walk past the SUB towards Oduduwa Hall."
-    }
-  ],
+  // routes: [
+  //   {
+  //     id: "r1",
+  //     fromId: "new_senate_building",
+  //     toId: "sub",
+  //     distance: "600m",
+  //     timeWalking: "8 mins",
+  //     shuttleAvailable: true,
+  //     shuttleFare: "₦50",
+  //     description: "Walk down Road 1, past the Motion Ground turnoff. The SUB is on your right."
+  //   },
+  //   {
+  //     id: "r2",
+  //     fromId: "moremi",
+  //     toId: "spider_building",
+  //     distance: "1.2km",
+  //     timeWalking: "15 mins",
+  //     shuttleAvailable: true,
+  //     shuttleFare: "₦50",
+  //     description: "Take a shuttle from Moremi gate to the Science/Tech park."
+  //   },
+  //   {
+  //     id: "r3",
+  //     fromId: "sub",
+  //     toId: "amphi",
+  //     distance: "300m",
+  //     timeWalking: "4 mins",
+  //     shuttleAvailable: false,
+  //     description: "A short walk past the SUB towards Oduduwa Hall."
+  //   }
+  // ],
 
+  routes: [],
   generalInfo: [
     "Campus Shuttles (Korope) charge ₦50-₦100 per trip.",
     "The Health Center is located on Road 1, near the Staff Quarters.",

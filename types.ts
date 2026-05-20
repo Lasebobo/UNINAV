@@ -26,6 +26,8 @@ export interface Message {
   directionsPayload?: DirectionsPayload;
   /** True for MODE A messages — renders "Get Directions" button */
   isDescriptionMode?: boolean;
+  /** Suppress the generic OAU image fallback for special location responses */
+  suppressGenericOauImage?: boolean;
   /** Optional transient directions status while fetching */
   directionsStatus?: 'loading' | 'retrying' | 'error';
   /** How many retry attempts have been made so far (informational) */

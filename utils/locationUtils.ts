@@ -34,3 +34,29 @@ export function isUserOnCampus(location: LatLng): boolean {
     location.lng <= OAU_BOUNDS.east
   );
 }
+
+const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+
+export function haversineDistanceMeters(a: LatLng, b: LatLng): number {
+  const dLat = toRadians(b.lat - a.lat);
+  const dLng = toRadians(b.lng - a.lng);
+  const lat1 = toRadians(a.lat);
+  const lat2 = toRadians(b.lat);
+  const sinDLat = Math.sin(dLat / 2);
+  const sinDLng = Math.sin(dLng / 2);
+
+  const haversine = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+  const c = 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+  return 6371000 * c;
+}
+
+export type LocationState = 'onCampus' | 'nearGate' | 'farOffCampus';
+
+export function getUserLocationState(location: LatLng): LocationState {
+  if (isUserOnCampus(location)) return 'onCampus';
+  return haversineDistanceMeters(location, OAU_MAIN_GATE) <= 2000 ? 'nearGate' : 'farOffCampus';
+}
+
+export function getRoutingOrigin(location: LatLng): LatLng {
+  return getUserLocationState(location) === 'nearGate' ? OAU_MAIN_GATE : location;
+}

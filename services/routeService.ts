@@ -180,7 +180,12 @@ async function fetchOsrmRoute(
         instruction: buildOsrmInstruction(step),
         distance:    formatDistance(stepDistance),
         duration:    formatDuration(calculatedDuration),
-        maneuver:    step.maneuver?.type ?? '',
+        maneuver:    (() => {
+          const type = (step.maneuver?.type ?? '').toString();
+          const modifier = (step.maneuver?.modifier ?? '').toString();
+          if (modifier) return `${type}-${modifier}`.toLowerCase();
+          return type.toLowerCase();
+        })(),
         target
       };
     });
@@ -232,7 +237,7 @@ export async function fetchGoogleRoute(
       instruction: useRawGoogleNames ? stripHtml(s.instruction) : replaceWithRoadLabels(stripHtml(s.instruction)),
       distance:    s.distance ?? '',
       duration:    s.duration ?? '',
-      maneuver:    s.maneuver ?? '',
+      maneuver:    (s.maneuver ?? '').toString().replace(/\s+/g, '-').toLowerCase(),
     }));
 
     return {

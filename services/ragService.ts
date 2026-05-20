@@ -2,7 +2,7 @@ import { supabase } from '../utils/supabase';
 import { SearchResult, CampusLocation, Message, DirectionsPayload } from '../types';
 import { generateGeminiResponse, GeminiResponse } from './geminiService';
 import { fetchBothRoutes } from './routeService';
-import { isUserOnCampus, OAU_MAIN_GATE } from '../utils/locationUtils';
+import { getRoutingOrigin, getUserLocationState, haversineDistanceMeters, isUserOnCampus, OAU_MAIN_GATE } from '../utils/locationUtils';
 
 const retrieveDocuments = async (query: string, allLocations: CampusLocation[] = []): Promise<SearchResult[]> => {
   const queryTokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
@@ -195,10 +195,26 @@ export const processQuery = async (
     ...customLocations
   ];
   
+  const isGenericOauQuery = (query: string) => {
+    const normalized = query.trim().toLowerCase();
+    return /^(what(?:'s| is)?|tell me about|describe|define|who is|about)\s+(?:the\s+)?(?:obafemi awolowo university|obafemi awolowo|oau)(?:\s+(?:like|known for|famous for|in nigeria|in ile-?ife|as a university|as an university|as an institution))?[\s\?\.]*$/i.test(normalized);
+  };
+
   const getSuggestedLocation = (answerText: string = "") => {
+    if (isGenericOauQuery(userQuery)) {
+      return undefined;
+    }
+
     let locId = findLocationInQuery(userQuery, allLocations);
     if (!locId && answerText) locId = findLocationInQuery(answerText, allLocations);
     return locId;
+  };
+
+  const formatDistanceLabel = (meters: number) => {
+    if (meters >= 1000) {
+      return `${(meters / 1000).toFixed(1).replace(/\.0$/, '')} km`;
+    }
+    return `${Math.round(meters)} m`;
   };
 
   const formatHistory = (currentPrompt: string) => {
@@ -302,21 +318,32 @@ export const processQuery = async (
         context: ['Self-location query — no GPS data'],
       };
     }
-    const onCampus = isUserOnCampus(userLocation);
-    let locationNote = '';
 
-    if (onCampus) {
-      locationNote = `You are currently **on the OAU campus** (Obafemi Awolowo University, Ile-Ife).`;
+    const locationState = getUserLocationState(userLocation);
+    const distanceToGate = haversineDistanceMeters(userLocation, OAU_MAIN_GATE);
+    const distanceLabel = formatDistanceLabel(distanceToGate);
+
+    let locationNote = '';
+    let suppressGenericOauImage = false;
+
+    if (locationState === 'onCampus') {
+      locationNote = `You are currently **on the OAU campus** (Obafemi Awolowo University, Ile-Ife). Your GPS position is inside the campus boundary.`;
+    } else if (locationState === 'nearGate') {
+      locationNote = `You are currently **outside the OAU campus**, but within about **${distanceLabel}** of the main gate. For routing, I will use the campus gate as your starting point so the directions begin at the campus perimeter.`;
     } else {
-      // Try to reverse geocode to give a better location than just "off campus"
+      let place = '';
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`);
         const data = await res.json();
-        const place = data.address?.city || data.address?.town || data.address?.state || data.address?.country || 'an off-campus location';
-        locationNote = `You appear to be in **${place}** — outside the OAU campus perimeter.`;
-      } catch (e) {
-        locationNote = `You appear to be **off campus** — outside the OAU campus perimeter.`;
+        place = data.address?.city || data.address?.town || data.address?.county || data.address?.state || data.address?.country || '';
+      } catch {
+        place = '';
       }
+      locationNote = `You are currently **outside the OAU campus** and more than **2 km** from the main gate. I will use your actual outside location for any directions rather than the campus gate image.`;
+      if (place) {
+        locationNote += ` This appears to be in **${place}**.`;
+      }
+      suppressGenericOauImage = true;
     }
 
     // Find nearest named location using simple proximity (best-effort from DB)
@@ -336,9 +363,10 @@ export const processQuery = async (
     }
 
     return {
-      answer: `${locationNote}${nearestNote} You can tap **View on Map** or ask "How do I get to [place name]?" for directions.`,
+      answer: `${locationNote}${nearestNote} You can ask "How do I get to [place name]?" for directions.`,
       context: ['Self-location query — GPS data used'],
       suggestedLocationId: undefined,
+      suppressGenericOauImage,
     };
   }
 
@@ -382,14 +410,16 @@ Question: ${userQuery}`;
 
     if (response.isError) return generateFallbackResponse(userQuery, allLocations);
 
-    // Resolve AFTER getting the response so the image matches what the model described,
-    // not an accidental alias match in the raw user query.
-    const suggestedLocationId = getSuggestedLocation(response.text);
+    // NOTE: Do NOT auto-select a suggested location based on the model's generated
+    // description text. This avoids choosing a specific campus location when the
+    // assistant is describing OAU generally (e.g. "Obafemi Awolowo University is...").
+    // We only use `suggestedLocationId` that was inferred from the original user
+    // query (above) so the UI will not pick a location unless the user asked for it.
 
     return {
       answer: response.text,
       context: contextStrings,
-      suggestedLocationId,
+      suggestedLocationId: suggestedLocationId, // only from the user's original query
       isDescriptionMode: true,       // Signals the UI to show "Get Directions" button
     };
   }
@@ -403,7 +433,7 @@ Question: ${userQuery}`;
     const destLoc = suggestedLocationId ? allLocations.find(l => l.id === suggestedLocationId) : null;
 
     // Resolve origin & destination coordinates
-    const origin = userLocation;
+    const origin = userLocation ? getRoutingOrigin(userLocation) : undefined;
     const destination = destLoc?.lat && destLoc?.lng
       ? { lat: destLoc.lat, lng: destLoc.lng }
       : null;
@@ -458,7 +488,7 @@ Question: ${userQuery}`;
     // The LLM is NOT called here under any circumstances.
     const navLocationId = getSuggestedLocation();
     const navDest = navLocationId ? allLocations.find(l => l.id === navLocationId) : null;
-    const navOrigin = userLocation;
+    const navOrigin = userLocation ? getRoutingOrigin(userLocation) : undefined;
     const navDestCoords = navDest?.lat && navDest?.lng
       ? { lat: navDest.lat, lng: navDest.lng }
       : null;

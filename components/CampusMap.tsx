@@ -3,7 +3,7 @@ import { CampusLocation } from '../types';
 import { Clock, Navigation, MapPin, X, Layers, Map as MapIcon } from 'lucide-react';
 import { ImageModal } from './ImageModal';
 import { fetchGoogleRoute, RouteResult } from '../services/routeService';
-import { isUserOnCampus, OAU_MAIN_GATE } from '../utils/locationUtils';
+import { getRoutingOrigin, isUserOnCampus, OAU_MAIN_GATE } from '../utils/locationUtils';
 import { MapContainer, TileLayer, Marker, Polyline, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -186,8 +186,9 @@ export const CampusMap: React.FC<CampusMapProps> = ({
     if (!apiKey) return '';
     const base = 'https://www.google.com/maps/embed/v1';
     if (activeDestination?.lat && activeDestination?.lng) {
-      const origin = userLocation
-        ? `${userLocation.lat},${userLocation.lng}`
+      const originCoords = userLocation ? getRoutingOrigin(userLocation) : undefined;
+      const origin = originCoords
+        ? `${originCoords.lat},${originCoords.lng}`
         : 'Obafemi+Awolowo+University,Ile-Ife';
       const dest = `${activeDestination.lat},${activeDestination.lng}`;
       return `${base}/directions?origin=${origin}&destination=${dest}&mode=walking&maptype=roadmap&key=${apiKey}`;
@@ -202,9 +203,10 @@ export const CampusMap: React.FC<CampusMapProps> = ({
       return;
     }
 
-    // If the user is outside campus, snap origin to the main gate bus stop
+    // If the user is outside campus but close to the main gate, snap origin to the gate.
+    // If they are farther away, use their real location so long-distance routing stays accurate.
     const rawOrigin = userLocation ?? CAMPUS_CENTRE;
-    const origin = isUserOnCampus(rawOrigin) ? rawOrigin : OAU_MAIN_GATE;
+    const origin = userLocation ? getRoutingOrigin(userLocation) : rawOrigin;
     const offCampus = userLocation ? !isUserOnCampus(userLocation) : false;
     const useRawGoogleNames = viewMode === 'google';
     // Attach the offCampus flag so the panel can show the gate note
