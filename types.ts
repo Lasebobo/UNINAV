@@ -32,6 +32,8 @@ export interface Message {
   directionsStatus?: 'loading' | 'retrying' | 'error';
   /** How many retry attempts have been made so far (informational) */
   directionsRetryCount?: number;
+  /** True if the message is a hidden gem discovery */
+  isGem?: boolean;
 }
 
 export interface CampusLocation {

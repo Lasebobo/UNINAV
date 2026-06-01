@@ -238,6 +238,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   onGetDirections,
 }) => {
   const [isImageOpen, setIsImageOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const isBot = message.role === 'bot';
   const formattedTime = new Date(message.timestamp).toLocaleTimeString([], {
     hour: '2-digit',
@@ -322,6 +323,23 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               {message.content}
             </ReactMarkdown>
           </div>
+
+          {/* Special Gem Card */}
+          {message.isGem && (
+            <div className="gem-card mt-4 p-4 rounded-xl bg-gradient-to-r from-yellow-50 to-amber-50">
+              <p className="font-bold text-amber-800 text-sm mb-3">🏅 Hidden Explorer — Unlocked {new Date().toLocaleDateString()}</p>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText("I just found a hidden gem on OAU campus using UniNav 🗺️💎 #UniNav #OAU");
+                  setIsCopied(true);
+                  setTimeout(() => setIsCopied(false), 2000);
+                }}
+                className="w-full py-2 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 font-bold rounded-lg shadow-sm transition-all text-xs flex justify-center items-center gap-1.5"
+              >
+                {isCopied ? 'Copied to clipboard!' : 'Share Discovery'}
+              </button>
+            </div>
+          )}
 
           {/* Mode A — offer directions */}
           {isBot && isDescriptionMode && !isDirectionsMode && (

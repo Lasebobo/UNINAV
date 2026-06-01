@@ -173,7 +173,7 @@ export const processQuery = async (
   customLocations: CampusLocation[] = [],
   userLocation?: { lat: number, lng: number },
   onProgress?: (info: { phase: 'osrm' | 'google' | 'done' | 'failed'; attempt?: number }) => void
-): Promise<{ answer: string; context: string[]; groundingMetadata?: any; suggestedLocationId?: string; directionsPayload?: DirectionsPayload; isDescriptionMode?: boolean }> => {
+): Promise<{ answer: string; context: string[]; groundingMetadata?: any; suggestedLocationId?: string; directionsPayload?: DirectionsPayload; isDescriptionMode?: boolean; suppressGenericOauImage?: boolean }> => {
   
   const lowerQuery = userQuery.toLowerCase();
   

@@ -14,7 +14,7 @@ const RAW_CAMPUS_DATA = {
       description: "The central library of the university, providing extensive digital and physical resources to support the research and learning needs of students and staff.",
       lat: 7.5195,
       lng: 4.5230,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFnBqF8Qjsd01OHvEe1cAJl9o_GH1rTKzYbjyzd_x7AruFaHDWX_90FUNjplXRzHXlRqT3MrxIAGb8iIGD4RkjVud8L1bresNqxCP6EPG9B7_8NzU93-hgM9B-6kXlVTdZgoXh2=s774-k-no"
+      imageUrl: "https://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/LIBRARY.jpg"
     },
     {
       id: "spider_building",
@@ -33,7 +33,7 @@ const RAW_CAMPUS_DATA = {
       type: "facility",
       description: "A major venue for student gatherings, shows, and large lectures, located within the Oduduwa Hall complex.",
       lat: 7.519465202308837,
-      lng:  4.521984748573766,
+      lng: 4.521984748573766,
       imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFu3LF3Bp5fo6Kg7wNKa8Vt8rWLg95UQQPmtyP7vy258_P3WcH-zwe_gswkxef2xUd-Wnz2pSTvas8G98TXBGmjKjFO95RZfYO6F9T25foxKWZ-xtxL180tBAZTYndGKOeb5XE=s773-k-no"
     },
     {

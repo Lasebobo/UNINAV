@@ -13,6 +13,27 @@ import { MapPin, Compass, Mic, Search, Map, Menu, Send, Trash2, MessageSquare, A
 // Simple ID generator
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
 
+const GEM_CONFIG = {
+  coordinate: { lat: 7.5173, lng: 4.5232 }, //  CAMPUS GATE
+  radiusMetres: 15,
+  id: 'oau-gem-001',
+};
+
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371e3; // metres
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) *
+    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
+
 const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem('uninav_messages');
@@ -20,7 +41,7 @@ const App: React.FC = () => {
       try {
         const parsed = JSON.parse(saved);
         if (parsed.length > 0) return parsed;
-      } catch (e) {}
+      } catch (e) { }
     }
     return [
       {
@@ -38,7 +59,7 @@ const App: React.FC = () => {
       try {
         const parsed = JSON.parse(saved);
         if (parsed.length > 1) return true; // length > 1 means they chatted beyond the initial welcome message
-      } catch (e) {}
+      } catch (e) { }
     }
     return false;
   });
@@ -46,13 +67,13 @@ const App: React.FC = () => {
   const [startInput, setStartInput] = useState('');
 
   const [locations, setLocations] = useState<CampusLocation[]>(CAMPUS_DATA.locations);
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [voiceMode, setVoiceMode] = useState(true);
   const [activeDestination, setActiveDestination] = useState<CampusLocation | null>(null);
-  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | undefined>(undefined);
+  const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | undefined>(undefined);
   const [locationError, setLocationError] = useState<string | null>(null);
-  
+
   // UI State
   const [activeTab, setActiveTab] = useState<'chat' | 'map'>('chat');
   const [isLiveOpen, setIsLiveOpen] = useState(false);
@@ -73,6 +94,64 @@ const App: React.FC = () => {
       setHasStarted(true);
     }
   }, [messages, activeTab]);
+
+  const triggerGemFound = () => {
+    // 1. Confetti Animation
+    import('canvas-confetti').then((module) => {
+      const confetti = module.default;
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      (function frame() {
+        confetti({
+          particleCount: 150,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#003399', '#FFD700', '#ffffff'],
+        });
+        if (Date.now() < end) {
+          setTimeout(frame, 250);
+        }
+      }());
+    });
+
+    // 2. Sound (Web Audio API)
+    if (window.AudioContext || (window as any).webkitAudioContext) {
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const ctx = new AudioContextClass();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(523, ctx.currentTime);   // C5
+        osc.frequency.setValueAtTime(659, ctx.currentTime + 0.15); // E5
+        osc.frequency.setValueAtTime(784, ctx.currentTime + 0.3);  // G5
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+          0.001, ctx.currentTime + 0.8
+        );
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.8);
+      } catch (e) {
+        console.error("Audio playback failed", e);
+      }
+    }
+
+    // 3. Chat Bubble
+    const botMsg: Message = {
+      id: generateId(),
+      role: 'bot',
+      content: `[Gem icon: 💎] You found a hidden gem!\n\n"Congratulations, explorer. You have discovered one of OAU's best-kept secrets. You are standing at the **Oduduwa Hall Amphitheater** — it is said that the acoustics of this amphitheater are so perfectly designed that a whisper at the center stage can be heard clearly at the very top row, a masterpiece of 1970s modernist architecture by Arieh Sharon.\n\nNot many people know this place exists. You do now."`,
+      timestamp: Date.now(),
+      isGem: true,
+      suppressGenericOauImage: true
+    };
+
+    setMessages(prev => [...prev, botMsg]);
+    setHasStarted(true);
+    setActiveTab('chat');
+  };
 
   useEffect(() => {
     async function fetchLocations() {
@@ -104,11 +183,19 @@ const App: React.FC = () => {
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        });
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setUserLocation({ lat, lng });
         setLocationError(null);
+
+        // GEM PROXIMITY CHECK
+        const distance = haversineDistance(lat, lng, GEM_CONFIG.coordinate.lat, GEM_CONFIG.coordinate.lng);
+        const alreadyFound = sessionStorage.getItem(`gem-${GEM_CONFIG.id}`);
+
+        if (distance <= GEM_CONFIG.radiusMetres && !alreadyFound) {
+          triggerGemFound();
+          sessionStorage.setItem(`gem-${GEM_CONFIG.id}`, 'true');
+        }
       },
       (error) => {
         console.warn("Geolocation error:", error);
@@ -144,7 +231,7 @@ const App: React.FC = () => {
       content: text,
       timestamp: Date.now()
     };
-    
+
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
@@ -169,7 +256,7 @@ const App: React.FC = () => {
     let interimSpoken = false;
 
     try {
-      const { answer, context, groundingMetadata, suggestedLocationId, directionsPayload, isDescriptionMode } = await processQuery(
+      const { answer, context, groundingMetadata, suggestedLocationId, directionsPayload, isDescriptionMode, suppressGenericOauImage } = await processQuery(
         text,
         messages,
         locations,
@@ -202,10 +289,10 @@ const App: React.FC = () => {
       );
 
       if (suggestedLocationId) {
-          const loc = locations.find(l => l.id === suggestedLocationId);
-          if (loc) {
-              setActiveDestination(loc);
-          }
+        const loc = locations.find(l => l.id === suggestedLocationId);
+        if (loc) {
+          setActiveDestination(loc);
+        }
       }
 
       // Remove the loading message (if present) and append final bot message
@@ -223,6 +310,7 @@ const App: React.FC = () => {
         suggestedLocationId,
         directionsPayload,
         isDescriptionMode,
+        suppressGenericOauImage,
       };
 
       // If this was a directions request and both engines failed, mark as error and provide fallback content
@@ -268,8 +356,11 @@ const App: React.FC = () => {
     if (!voiceMode || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
     const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(v => v.lang.includes('en-US') && v.name.toLowerCase().includes('google')) || voices[0];
+    const preferred =
+      voices.find(v => v.lang.includes('en-US') && v.name.toLowerCase().includes('google')) ||
+      voices.find(v => v.lang.toLowerCase().startsWith('en'));
     if (preferred) utterance.voice = preferred;
     utterance.rate = 1.05;
     window.speechSynthesis.speak(utterance);
@@ -328,46 +419,46 @@ const App: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col items-center justify-center px-4 md:px-5 md:-mt-20 overflow-y-auto pb-24 md:pb-0">
-          
+
           {/* Center Logo */}
           <img src="/logo.png" alt="UniNav Large Logo" className="w-[56px] h-[56px] md:w-[72px] md:h-[72px] rounded-full shadow-md mb-6 md:mb-8 shrink-0" />
 
           <h1 className="text-[26px] sm:text-[32px] md:text-4xl font-semibold text-gray-800 mb-3 md:mb-4 text-center leading-tight md:tracking-tight max-w-[320px] md:max-w-none">
-             <span className="md:hidden">Ask for directions or explore<br/>campus locations</span>
-             <span className="hidden md:inline">Ask for directions or explore campus locations</span>
+            <span className="md:hidden">Ask for directions or explore<br />campus locations</span>
+            <span className="hidden md:inline">Ask for directions or explore campus locations</span>
           </h1>
           <p className="text-gray-500 text-[13px] sm:text-[15px] md:text-base mb-8 md:mb-10 text-center font-medium max-w-[360px] md:max-w-none leading-relaxed">
-             Get instant help navigating OAU campus with AI-powered assistance
+            Get instant help navigating OAU campus with AI-powered assistance
           </p>
 
           {/* Search Bar - Static on Desktop, Absolute Bottom on Mobile */}
           <div className="w-full max-w-3xl z-10 absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#fcfdfd] via-[#fcfdfd] to-transparent md:static md:bg-none md:p-0 md:bg-transparent md:mb-12">
             <div className="relative flex items-center w-full h-[54px] md:h-14 rounded-full border border-gray-200 bg-white shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)] md:shadow-sm md:hover:shadow px-5 md:px-6">
               <input
-                 type="text"
-                 placeholder="Enter a destination or ask about a location..."
-                 className="w-full h-full bg-transparent outline-none text-gray-700 placeholder-gray-400 text-[16px] md:text-[15px]"
-                 value={startInput}
-                 onChange={(e) => setStartInput(e.target.value)}
-                 onKeyDown={(e) => {
-                   if (e.key === 'Enter' && startInput.trim()) {
-                     setHasStarted(true);
-                     processUserRequest(startInput.trim());
-                   }
-                 }}
+                type="text"
+                placeholder="Enter a destination or ask about a location..."
+                className="w-full h-full bg-transparent outline-none text-gray-700 placeholder-gray-400 text-[16px] md:text-[15px]"
+                value={startInput}
+                onChange={(e) => setStartInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && startInput.trim()) {
+                    setHasStarted(true);
+                    processUserRequest(startInput.trim());
+                  }
+                }}
               />
-              <button 
-                 className="absolute right-1.5 md:right-2 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors shrink-0 shadow-sm md:shadow-none"
-                 onClick={() => {
-                   setHasStarted(true);
-                   if (startInput.trim()) {
-                     processUserRequest(startInput.trim());
-                   } else {
-                     setIsLiveOpen(true);
-                   }
-                 }}
+              <button
+                className="absolute right-1.5 md:right-2 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition-colors shrink-0 shadow-sm md:shadow-none"
+                onClick={() => {
+                  setHasStarted(true);
+                  if (startInput.trim()) {
+                    processUserRequest(startInput.trim());
+                  } else {
+                    setIsLiveOpen(true);
+                  }
+                }}
               >
-                 {startInput.trim() ? <Send className="w-4 h-4 md:w-5 md:h-5" strokeWidth={2.5} /> : <Mic className="w-4 h-4 md:w-5 md:h-5" strokeWidth={2.5} />}
+                {startInput.trim() ? <Send className="w-4 h-4 md:w-5 md:h-5" strokeWidth={2.5} /> : <Mic className="w-4 h-4 md:w-5 md:h-5" strokeWidth={2.5} />}
               </button>
             </div>
           </div>
@@ -431,51 +522,51 @@ const App: React.FC = () => {
     <div className="fixed inset-0 flex flex-col bg-gray-50 overflow-hidden">
       {/* Header */}
       <header className="h-[60px] md:h-16 bg-white border-b border-gray-100 flex justify-between items-center px-4 shrink-0 shadow-sm z-10 transition-all">
-          <div className="flex items-center gap-3">
-                 {activeTab === 'map' && (
-                     <button onClick={() => setActiveTab('chat')} className="text-gray-400 hover:text-gray-600 transition-colors p-1" title="Back to Chat">
-                         <ArrowLeft className="w-5 h-5" />
-                     </button>
-                 )}
-                 <img src="/logo.png" alt="Logo" className="w-9 h-9 rounded-full shadow-sm shrink-0" />
-                 <div className="flex flex-col">
-                     <h1 className="text-gray-800 font-semibold text-[15px] leading-tight">
-                         {activeTab === 'map' ? 'Campus Map' : 'OAU Campus Guide'}
-                     </h1>
-                     <span className="text-[11px] text-gray-400 font-medium mt-0.5">
-                         {activeTab === 'map' ? 'Obafemi Awolowo University' : 'Online • Always here to help'}
-                     </span>
-                 </div>
-             </div>
-          <div className="flex items-center gap-2">
-            {activeTab !== 'map' && (
-              <button 
-                  onClick={() => setActiveTab('map')}
-                  className="text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors p-2.5 rounded-full mr-1 flex items-center justify-center shadow-sm"
-                  title="Open Map"
-              >
-                  <Map className="w-4 h-4 md:w-5 md:h-5" />
-              </button>
-            )}
-            {activeTab !== 'map' && (
-                <button 
-                  onClick={() => setShowClearConfirm(true)} 
-                  className="text-gray-400 hover:text-red-500 p-2 transition-colors mr-1"
-                  title="Clear Chat History"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-            )}
-            {activeTab === 'map' && (
-                <button 
-                  onClick={() => setIsSidebarOpen(true)} 
-                  className="text-gray-500 hover:text-gray-800 p-2 transition-colors md:hidden"
-                  title="Open Locations"
-                >
-                  <Menu className="w-6 h-6" />
-                </button>
-            )}
+        <div className="flex items-center gap-3">
+          {activeTab === 'map' && (
+            <button onClick={() => setActiveTab('chat')} className="text-gray-400 hover:text-gray-600 transition-colors p-1" title="Back to Chat">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
+          <img src="/logo.png" alt="Logo" className="w-9 h-9 rounded-full shadow-sm shrink-0" />
+          <div className="flex flex-col">
+            <h1 className="text-gray-800 font-semibold text-[15px] leading-tight">
+              {activeTab === 'map' ? 'Campus Map' : 'OAU Campus Guide'}
+            </h1>
+            <span className="text-[11px] text-gray-400 font-medium mt-0.5">
+              {activeTab === 'map' ? 'Obafemi Awolowo University' : 'Online • Always here to help'}
+            </span>
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {activeTab !== 'map' && (
+            <button
+              onClick={() => setActiveTab('map')}
+              className="text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors p-2.5 rounded-full mr-1 flex items-center justify-center shadow-sm"
+              title="Open Map"
+            >
+              <Map className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+          )}
+          {activeTab !== 'map' && (
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              className="text-gray-400 hover:text-red-500 p-2 transition-colors mr-1"
+              title="Clear Chat History"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          )}
+          {activeTab === 'map' && (
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="text-gray-500 hover:text-gray-800 p-2 transition-colors md:hidden"
+              title="Open Locations"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Clear History Confirmation Modal */}
@@ -485,13 +576,13 @@ const App: React.FC = () => {
             <h3 className="text-lg font-bold text-gray-900 mb-2">Clear History</h3>
             <p className="text-gray-600 mb-6">Are you sure you want to clear your chat history? This action cannot be undone.</p>
             <div className="flex justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setShowClearConfirm(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={clearHistory}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
               >
@@ -511,64 +602,64 @@ const App: React.FC = () => {
           </div>
         )}
         {activeTab === 'map' ? (
-            <div className="absolute inset-0 flex flex-col">
-                <CampusMap 
-                    key={mapKey}
-                    locations={locations} 
-                    onLocationSelect={handleLocationSelect}
-                    onGetDirections={handleGetDirections}
-                    userLocation={userLocation}
-                    activeDestination={activeDestination}
-                    isSidebarOpen={isSidebarOpen}
-                    onCloseSidebar={() => setIsSidebarOpen(false)}
-                    onOpenSidebar={() => setIsSidebarOpen(true)}
-                />
-            </div>
+          <div className="absolute inset-0 flex flex-col">
+            <CampusMap
+              key={mapKey}
+              locations={locations}
+              onLocationSelect={handleLocationSelect}
+              onGetDirections={handleGetDirections}
+              userLocation={userLocation}
+              activeDestination={activeDestination}
+              isSidebarOpen={isSidebarOpen}
+              onCloseSidebar={() => setIsSidebarOpen(false)}
+              onOpenSidebar={() => setIsSidebarOpen(true)}
+            />
+          </div>
         ) : (
-            <div className="flex flex-col h-full">
-                <div className="flex-1 overflow-y-auto p-4 pb-20">
-                    <div className="w-full max-w-4xl mx-auto flex flex-col pt-4">
-                        {messages.map(msg => (
-                            <ChatMessage 
-                                key={msg.id} 
-                                message={msg} 
-                                locations={locations}
-                                onGetDirections={handleChatGetDirections}
-                                onViewMap={() => {
-                                    if (msg.suggestedLocationId) {
-                                        const loc = locations.find(l => l.id === msg.suggestedLocationId);
-                                        if (loc) setActiveDestination(loc);
-                                    }
-                                    setActiveTab('map');
-                                }}
-                            />
-                        ))}
-                        {isLoading && (
-                            <div className="bg-white p-3 rounded-lg border border-gray-200 self-start inline-block shadow-sm">
-                                 <p className="text-gray-400 text-xs animate-pulse">Thinking...</p>
-                            </div>
-                        )}
-                        <div ref={messagesEndRef} />
-                    </div>
-                </div>
-                <div className="shrink-0">
-                    <InputArea 
-                        onSend={processUserRequest} 
-                        onStartLive={() => setIsLiveOpen(true)}
-                        isLoading={isLoading} 
-                        voiceMode={true}
-                    />
-                </div>
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto p-4 pb-20">
+              <div className="w-full max-w-4xl mx-auto flex flex-col pt-4">
+                {messages.map(msg => (
+                  <ChatMessage
+                    key={msg.id}
+                    message={msg}
+                    locations={locations}
+                    onGetDirections={handleChatGetDirections}
+                    onViewMap={() => {
+                      if (msg.suggestedLocationId) {
+                        const loc = locations.find(l => l.id === msg.suggestedLocationId);
+                        if (loc) setActiveDestination(loc);
+                      }
+                      setActiveTab('map');
+                    }}
+                  />
+                ))}
+                {isLoading && (
+                  <div className="bg-white p-3 rounded-lg border border-gray-200 self-start inline-block shadow-sm">
+                    <p className="text-gray-400 text-xs animate-pulse">Thinking...</p>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             </div>
+            <div className="shrink-0">
+              <InputArea
+                onSend={processUserRequest}
+                onStartLive={() => setIsLiveOpen(true)}
+                isLoading={isLoading}
+                voiceMode={true}
+              />
+            </div>
+          </div>
         )}
       </main>
 
       {/* Live API Modal */}
       {isLiveOpen && (
-        <LiveAPI 
-            visible={isLiveOpen} 
-            onClose={() => setIsLiveOpen(false)}
-            onTranscript={handleLiveTranscript}
+        <LiveAPI
+          visible={isLiveOpen}
+          onClose={() => setIsLiveOpen(false)}
+          onTranscript={handleLiveTranscript}
         />
       )}
 

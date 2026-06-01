@@ -50,10 +50,11 @@ export function useNavigation(steps: RouteStep[]) {
   const speakInstruction = useCallback((text: string, onEnd?: () => void) => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
     const voices = window.speechSynthesis.getVoices();
     const preferredVoice =
       voices.find((v) => v.lang.includes('en-US') && v.name.includes('Google')) ||
-      voices[0];
+      voices.find((v) => v.lang.toLowerCase().startsWith('en'));
     if (preferredVoice) utterance.voice = preferredVoice;
     utterance.rate = 1.1;
 
