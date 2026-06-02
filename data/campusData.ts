@@ -14,7 +14,7 @@ const RAW_CAMPUS_DATA = {
       description: "The central library of the university, providing extensive digital and physical resources to support the research and learning needs of students and staff.",
       lat: 7.5195,
       lng: 4.5230,
-      imageUrl: "https://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/LIBRARY.jpg"
+      imageUrl: "images/hezekiah_library.jpg"
     },
     {
       id: "spider_building",
@@ -24,7 +24,7 @@ const RAW_CAMPUS_DATA = {
       description: "The Department of Civil Engineering, popularly known as the Spider Building due to its unique structural design.",
       lat: 7.5228467,
       lng: 4.5291902,
-      imageUrl: "https://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/spider.jpeg"
+      imageUrl: "images/spider_building.jpeg"
     },
     {
       id: "amphi",
@@ -34,7 +34,7 @@ const RAW_CAMPUS_DATA = {
       description: "A major venue for student gatherings, shows, and large lectures, located within the Oduduwa Hall complex.",
       lat: 7.519465202308837,
       lng: 4.521984748573766,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFu3LF3Bp5fo6Kg7wNKa8Vt8rWLg95UQQPmtyP7vy258_P3WcH-zwe_gswkxef2xUd-Wnz2pSTvas8G98TXBGmjKjFO95RZfYO6F9T25foxKWZ-xtxL180tBAZTYndGKOeb5XE=s773-k-no"
+      imageUrl: "images/amphi.png"
     },
     {
       id: "sub",
@@ -44,7 +44,7 @@ const RAW_CAMPUS_DATA = {
       description: "The SUB houses the student union offices, a large buttery, and shops. It is the center of student social politics.",
       lat: 7.5169,
       lng: 4.5213,
-      imageUrl: "https://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/SUB.jpghttps://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/SUB.jpg"
+      imageUrl: "images/sub.jpg"
     },
     {
       id: "moremi",
@@ -54,7 +54,7 @@ const RAW_CAMPUS_DATA = {
       description: "A popular female hall of residence, known for its vibrant atmosphere and proximity to the academic area.",
       lat: 7.5140,
       lng: 4.5190,
-      imageUrl: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=600&q=80"
+      imageUrl: "images/moremi.jpg"
     },
     {
       id: "awolowo",
@@ -64,7 +64,7 @@ const RAW_CAMPUS_DATA = {
       description: "The legendary male hall of residence, known for its strong 'Aro' culture and political activism.",
       lat: 7.522047983886849,
       lng: 4.515844175862876,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAHQJuTXhwdwFhl7FuTCPDC0XPptTOiJatFfhdbn9zeixXzJZHF3LZBWpsHpzdHuoUxbPZXetSMstbKRbNyJhMx1IYO76RxiZNAzfdH4dPkMRA9mR6Wx7O0t-0UmyqaSpoKix5Hr=s773-k-no"
+      imageUrl: "images/awolowo.jpg"
     },
     {
       id: "pharmacy",
@@ -74,7 +74,7 @@ const RAW_CAMPUS_DATA = {
       description: "The Faculty of Pharmacy at OAU is a premier center for pharmaceutical education and research in Nigeria, known for its rigorous academic standards.",
       lat: 7.5174,
       lng: 4.5269,
-      imageUrl: "https://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/Pharmacy.jpg"
+      imageUrl: "images/pharmacy.jpg"
     },
     {
       id: "motion_ground",
@@ -84,7 +84,7 @@ const RAW_CAMPUS_DATA = {
       description: "A prominent open space and transit hub near the academic core, often used as a landmark for navigation and student gatherings.",
       lat: 7.5183,
       lng: 4.5228,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAEp1Amj7X-66wKyw2a9_Kc6MFMt_LzFVwgLJFhY12y0TlKZLLsQN37P_CqrU_OwJXBLztTu0EDN_fuwxMI9Sm5Zy6lKKqPV9Okl4LxC85R0M6tTSFz1coTPTCjB55J7ge_WXqbJ=s720-k-no"
+      imageUrl: "images/motion_ground.jpg"
     },
     {
       id: "firstbank_lt",
@@ -94,7 +94,7 @@ const RAW_CAMPUS_DATA = {
       description: "A large lecture theatre sponsored by FirstBank, used for major academic and university events.",
       lat: 7.522132,
       lng: 4.524033,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAEh8jhOqeygW16ykKVhEv7USKjufTWIM3AO5b8FHZq71LlsGs85Sc9Q7yzOW3qLeYbiTJGckov946je9gNGCTQW89-8pm_Y8gBXXUi-Pim343lBhMWXxqTYwl8y_R7a2gMZi3gotQ=s1031-k-no"
+      imageUrl: "images/firstbank_lt.png"
     },
     {
       id: "faculty_of_science",
@@ -104,7 +104,7 @@ const RAW_CAMPUS_DATA = {
       description: "The Faculty of Science at Obafemi Awolowo University, home to departments including Physics, Chemistry, and Mathematics.",
       lat: 7.51914,
       lng: 4.52514,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAF5x1YIB_k47a9BLrcjMCNWsxIHDhzEWlNRg1BssIEQMOsd3WZU_tTtfpb44peAG_HpjlFcof2C5nf4Kkj07eitwHdH0uyGKuI7WuJRI4kj6J6Ro8H3qo4iBqHM9YNgySsmHpt6zg=w408-h544-k-no"
+      imageUrl: "images/faculty_of_science.png"
     },
     {
       id: "ACE",
@@ -114,7 +114,7 @@ const RAW_CAMPUS_DATA = {
       description: "The postgraduate facility at Obafemi Awolowo University, Ile-Ife, Nigeria.",
       lat: 7.517826,
       lng: 4.530035,
-      imageUrl: "https://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/ACE.jpg"
+      imageUrl: "images/ACE.jpg"
     },
 
     // ── New locations (GPS-verified) ──────────────────────────
@@ -171,7 +171,7 @@ const RAW_CAMPUS_DATA = {
       description: "Campus Gate Bus Stop is a recognized landmark location.",
       lat: 7.497281099999999,
       lng: 4.522773,
-      imageUrl: "https://weaisrpqcfphiskvbdel.supabase.co/storage/v1/object/public/Images/gate.JPG"
+      imageUrl: "images/campus_gate_bus_stop.jpg"
     },
     {
       id: "obafemi_awolowo_university_health_centre",
@@ -181,7 +181,7 @@ const RAW_CAMPUS_DATA = {
       description: "Obafemi Awolowo University Health Centre provides healthcare and medical support services.",
       lat: 7.517722,
       lng: 4.526348,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAH70r0e29bUc1mNThg8wvXetpmlHV5WMO-C7XxsFqr4OhUWw2rTgjHr3XNlSGASbszqVrqqGjtiNb1CZRriBkspKx252_2PkKZq54jvCsTwo7EOBKLPXWkgLVMKx1rFzE5-PVS2oA=s1289-k-no"
+      imageUrl: "images/obafemi_awolowo_university_health_centre.jpg"
     },
     {
       id: "department_of_local_government_studies_old_building",
@@ -200,7 +200,7 @@ const RAW_CAMPUS_DATA = {
       description: "OAU Water Works Administrative Office is a recognized landmark location.",
       lat: 7.502834999999999,
       lng: 4.5280192,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAENq3ASyBrdI7XjlTIQXvnFXyG5bQqGUCa1gwgX8KH2RbCgLTyufkXeGQhY_QuB8w8Gr_sNs23bTJrK7C9OEoeZ-MPlyab5a_Z8k8ys0z8tB5MsAJUHYofXKWQq1YARk0qQl2mB=s812-k-no"
+      imageUrl: "images/oau_water_works_administrative_office.jpg"
     },
     {
       id: "step_b",
@@ -219,7 +219,7 @@ const RAW_CAMPUS_DATA = {
       description: "OAK Park Conference Hall is a recognized landmark location.",
       lat: 7.5182477,
       lng: 4.530310399999999,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-thTGeEeJwpOG-xQEIoAsCMRrsnR5X9ACm8QgbkJOuSaEEsuZutYX2yNQlpStaZVJjbcfWnjoVcgIV0MI0-wXkCeAlfy2yYcpolnoNseCLAiEI2Fh2EUtgMiZdXBm8BFjm-4sudGy8RDvIMEF1EOhREcghwEVGQzGc7UVpVJWsP1HpEeG_jxbwouV5I8Bga5gQUYasIiO487yvjzI_MEopE7E4fz33Vi3_2STkA2rqEMkS-XCO6DS55OTP-SCMfzMkR__MdPcPX0qdyBK0E0tNgV1oG5pZcFBZ8JVnPLJFAGZBJ7fJMpJqPiFgvn8QK6RjzcMXaC9OFsW-Mx1kDz8751K7ZU_VUMuMQ-xxehTIJFa7fffOO_TTN3lYI50S5w4IfNfRLZ9Jgc78q3QxkDA_YXoqeAFq9KHZfE7pIbjyDIm_HaQnAHhgK1by7OQ&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+      imageUrl: "images/oak_park_conference_hall.jpg"
     },
     {
       id: "oduduwa_hall",
@@ -229,7 +229,7 @@ const RAW_CAMPUS_DATA = {
       description: "Oduduwa Hall is a recognized landmark location.",
       lat: 7.5187366,
       lng: 4.5220392,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-u_iVrEdlZLppVgAml-y-NYNg2WvWY3S3qSA7FGuIARetH-tkF0RtJyR-g9DFrnu_BXtoJSuLYT3o0zNHYiRrsaY5uHL8Wyl2kfbYeGY0LYtk6rZ5xrXn1l0t9yUlbt9Z54sRfp6VWKWGnMmFB_QagFnnwWtkf_ZIwL21cGZuHBVM-zjvoquTwb3uXJbXqegx3eMZfQMvJbo9MDQSflBT-wDdoGdbgUPNwFm-7q5VNE0LD59HvvHEtiuiBAgpKhsNbhMqb78P7fslW3gWXakLbxkii2lm9C70KtU32YBSPExd7mZQhbgxByyQ39kTFIoFoB5GYlO8nKQ89eJHMOqtBPOaVgIErjRRo84Iyt9sKbXGad89PnXg7h9jACbYMHzke--na4I9mydvoOnycQkcY7VXDTxpi5q4H_fVnSOV-1Pg&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+      imageUrl: "images/oduduwa_hall.jpg"
     },
     {
       id: "pit_theatre",
@@ -239,7 +239,7 @@ const RAW_CAMPUS_DATA = {
       description: "Pit Theatre is a recognized landmark location.",
       lat: 7.521662699999999,
       lng: 4.521122699999999,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-vwMsajx-sxcuFUCtqIa0brhkY9F2zoQIxrZlOUrSvk3g8d5SYgeuw0nJWVK34K231PObPFqsgEt3UpVxElu9hzmDPszaWDhq2hfAqlSipB8jUrTqaY-xPCyQZ3JINcI_uEatjf3S_rGWtAyccU0N5KjP1Q0RHTrS9XzFjZsqZ2rsXlbj2iVtWbeTTjR6xPXOOLdUMXtZrTsFTGgO4SxtLdv5QpUsvP1ao5_Qx6UB4oOvGeNSJho0Kpp9kLKjuA6B1ZdWrQ4Krd2SiNicQx-xnChpPJh38aZnLpSsaeINcqwRT7UHv_jd5d6Gr4-65xDaJWo_71pYoikIiNjO87rK66vuk5ISl5e25YjHFtlF-wYzOjCuumY2uX7e8RrD8vo2hlhjzq7CouwubzjFxQj3R30YJHCExeZxs-NDmjkIZ6Ww&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+      imageUrl: "images/pit_theatre.jpg"
     },
     {
       id: "admin_extention",
@@ -249,7 +249,7 @@ const RAW_CAMPUS_DATA = {
       description: "Admin Extention is a recognized landmark location.",
       lat: 7.521569999999999,
       lng: 4.5196114,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFrclkYYx600ui_OupVQFNuTZh96Dxd1cL0kAJdSxnerGW5O8RtiCrFtz6eg68Znn697-EUgBkiSFOWgc4BfrmMessS-fIBxFLbxOK7hgHj10zm3bJm0ioF-rYeB8hUNnT8-zby=s901-k-no"
+      imageUrl: "images/admin_extention.jpg"
     },
     {
       id: "adekunle_fajuyi_hall_obafemi_awolowo_university",
@@ -259,7 +259,7 @@ const RAW_CAMPUS_DATA = {
       description: "Adekunle Fajuyi Hall, Obafemi Awolowo University is a recognized landmark location.",
       lat: 7.517677,
       lng: 4.5176115,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAF4hU7A_zQaULI1OVubUZydJvVWiR5NDLL4wCVReGyZk3xFWVtrosYh_UdaA1HiNHQGM7wmLraE3Z0HidOx65-r5thWdkhXo4dLYdy-ncQbFOEB8ZjC0szDgGR3Y3Q6buv1x6d-=s773-k-no"
+      imageUrl: "images/adekunle_fajuyi_hall_obafemi_awolowo_university.jpg"
     },
     {
       id: "akintola_hostel",
@@ -269,7 +269,7 @@ const RAW_CAMPUS_DATA = {
       description: "Akintola Hostel is a female hostel beside the sports complex.",
       lat: 7.5170083,
       lng: 4.5198364,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-t4g_1yHyyhEdD9sDdinUsZDCfCoU2LGRvNLw8SOpHsRU7p5qPge4yMLLqzkJMI-8Vf5YRJKZ8kk2V9l0vffJeLs8_p3RgD-Ns7Dy2APNYocoeB4QijfvXj8z0jQkL-dZ4vNQDAoHrJ-c4AWX_ALJGDSRPu7fF4dSZLAR01BD0qPNfaPtLj1raoJRMh_-Qz5OpNDE_FUxdTnTNGLtq9YcPGAOvpu1LBc6kGmSVwVGTg2RM2Y2-R5Xw-UuP8YklOE-yB8GD2YHzbNeaAgs7BePdNzHQWysA1bczrJjeriYpW77KUqsgmdiaamsMR18ezsJf1UAvjQoRQ7GgVKzK9NsXu_sJIOeSNDGNk57gn6Bq3M3MvRsj6EPMt8GZ5m54gCdlO0Cizbvy1LzEfgOAswmv7WFxsTQTKVHRa1iLijIJ6QM75&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+      imageUrl: "images/akintola_hostel.jpg"
     },
     {
       id: "awovarsity_hall",
@@ -279,7 +279,7 @@ const RAW_CAMPUS_DATA = {
       description: "Awovarsity Hall is a recognized landmark location.",
       lat: 7.513338899999999,
       lng: 4.524348799999999,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-u_kf6n2WPDiQKVCsHfm3kVJyypKGWIgMtGwVhcUzhznWlqS6kTg-0cupy8MurvF0jWi9osYmeybXiRzTrDgzr7w6wwZ4uBNOr0lZm5xcNysAg7mOhXBSqJq0-WobTwgafRWwTlVCVrOIDdMZm2bUdFaZTiPUaK9Wu26Whus_7vWsq-3tiUfIpQZwOsaUcUfHw2vyZfw-dZXGc-c5ge5k4LRMYl1cce5h89TIuAG2yKkdsM6nWexsVbVKQCxQ_a35Zb-6tAy-JkNAtUlmEA9l9gaGGxh8KJe3yGYSNROrj-QjZK-0Y4RudhZyKiWzHnRiM2r5ffJLffGG8LexbYvbsM55dARTHAFQw6S1EMsexSRhmxSDSL4dAEy_Gfmnp1JMbSoCAcxT421ttSeS-kEJY3_lEh65KH0aQbxOVT7EHBpPCF&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+      imageUrl: "images/awovarsity_hall.jpg"
     },
     {
       id: "cooperative_hall",
@@ -298,7 +298,7 @@ const RAW_CAMPUS_DATA = {
       description: "Alex Duduyemi Lecture Theater is a recognized landmark location.",
       lat: 7.5238741,
       lng: 4.5262451,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-tAu77wBywy8jhdaPSXIFHWFJSzO0mzhUAZCiB1G3AOEJUG9cmVbKFrEe9rf_79qYEiv-30HTBi-T6Re5W9Ru1KMveuLo0yd4cclEaFjApEwdY9x-y6aQN5Niev96SCPVAw_lyiKbnDPYIEHoPAlqI6-AC2PslgWt4Til7cC34QfXiSUISRoCo4YN7aR14DLDWkSdYxGbGpKSd-v51kdkp1xmvNcBr3vopbOkcdwGiFMrOooNyB2farGTUWOWSv7xlLawLXbLtBqiRbwB1lUBdE4wN9VwjJ9LEr_ugLRwuwoc-N6IgAJlMEr1skisXTeRdqMPKuQdm-zuYShrjSLLQZB185j-UaXLU9JZKUW4SNiSEQC1Z5vzd73dweb3eElwZtvoOafAcI4dTDX_kRcrLTjnF0XFO7Qdd4rQevCnpKvX1C&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+      imageUrl: "images/alex_duduyemi_lecture_theater.jpg"
     },
     {
       id: "ajose_lecture_theatre",
@@ -308,7 +308,7 @@ const RAW_CAMPUS_DATA = {
       description: "Ajose Lecture Theatre is a recognized landmark location.",
       lat: 7.5213991,
       lng: 4.5265529,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAF1OVeloEihygOQ9vsfQel6zkTcoWb_sTJUC0GrETNDq72GJjlTnYYUdjuSH9gx6hD85xvzzA5BHYI7gccKu5M32a8gXqm-QwVhtnwU5Zfs8XOqFNnp4RhxBnV6Ld7qDRN61xvx=s1031-k-no"
+      imageUrl: "images/ajose_lecture_theatre.jpg"
     },
     {
       id: "oau_sports_complex",
@@ -329,7 +329,7 @@ const RAW_CAMPUS_DATA = {
       description: "Ojaja Hostel is a recognized landmark location.",
       lat: 7.517415,
       lng: 4.509251700000001,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-uGKqZdZX5p6_UN-_EYlMkRKQ7N3ypUF2_TUInNFT7AcV9m_9wg0-bCpR962tUMziEr3hHJHaBL2E7hjll1W9t2HmDuOwbc4PhJy9FnKuBo5hwCwCh0N0Vgs5pbN1xrsPQ-zZ-zLyCrjZWZyn9Al7J4BiyyqU6A2hhgnGdkjfrtF8z0Io0XWqP6hPIYRwGmMYnYJsIBcpXOTEueXJtwYsW9M6dRnXG8BKcidynysiuXCrAPWeKJM-J1ZgIvJvylE6vPBx6_foZ8LS00pSSR5fJMC8RVfGW1W7bN_AdpV-N45Oo6RhyuZqHRswvv0Rl_uoE_Koch9uppYAuRH7Ll_VdrphP9NG9eigg2CMESBfk8Pu6Z2I1d3cFB5rxhFgTde0ooAqdENhRIQeS4kZADayWBR_c38cqum5qDF_vvuLSccFwjNziIsA&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+      imageUrl: "images/ojaja_hostel.jpg"
     },
     {
       id: "mozambique_hall_obafemi_awolowo_university",
@@ -339,7 +339,7 @@ const RAW_CAMPUS_DATA = {
       description: "Mozambique Hall, Obafemi Awolowo University is a recognized landmark location.",
       lat: 7.522280599999999,
       lng: 4.514088999999999,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAGYC41B4eljZ9IRQ6YqK9JsqWkk7yD44HiP7I-NE6OVvebLKw2aYM0PilOebnbBS-M7PnJOt-TB1u5x_qWAy_16s00LpOyWfVJWab5Hvt6_H7IEjuYTxttyL0OecAvjriAbj3Javv_sk9w=s773-k-no"
+      imageUrl: "images/mozambique_hall_obafemi_awolowo_university.jpg"
     },
     {
       id: "basketball_court_oau_ife",
@@ -359,7 +359,7 @@ const RAW_CAMPUS_DATA = {
       description: "Angola Hall, Obafemi Awolowo University is a recognized landmark location.",
       lat: 7.521747299999999,
       lng: 4.5123356,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFihF-Te9GIMn3lGoJGxZYCrTcxTqBev-7yx4mRCA1KDwtrIeUUY0DGzMlgYIaOcSRMbXHKCg9En2g9yplbKDPebi8AUpJC9GgPk8hXrnIrfibufWOOATTqPAyewqxuUNeOg29t=s901-k-no"
+      imageUrl: "images/angola_hall_obafemi_awolowo_university.jpg"
     },
     {
       id: "new_senate_building",
@@ -369,7 +369,7 @@ const RAW_CAMPUS_DATA = {
       description: "New Senate Building is a recognized landmark location.",
       lat: 7.518702892841351,
       lng: 4.524234160623102,
-      imageUrl: "https://lh3.googleusercontent.com/gps-cs-s/APNQkAFtlU0qPgC7aj1HSg_6TUWb6zXGoFi3rAAsJg9FDJdf5UQiRpVf0w62UBJQql7WkpJrFYCXDuC7dfKYJK4qthICCVbXfGpixRuMyHXUH4zqgOuN6RGfXjL0wOIGdo0sQvKRM2rq-w=s812-k-no"
+      imageUrl: "images/new_senate_building.jpg"
     },
     {
       id: "biological_science_area_faculty_of_sciences_obafemi_awolowo_university",
@@ -379,7 +379,7 @@ const RAW_CAMPUS_DATA = {
       description: "Biological Science Area, Faculty of Sciences, Obafemi Awolowo University is an academic facility within the university environment.",
       lat: 7.518968399999999,
       lng: 4.525836099999999,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-vXFzSyIER2nz60tzi6Kjn0otq2tkTY_4VATaDesOgEC7pFaDKcWqYpy5iS-SlAUDhcPFutwFVceBjY2r-88Ciddd7hQK3qEB0rNG4_M4biKn4Z4XBM7PX8NnPoutin2T3xL-aKfJCB2L5PW9yd65jRLMLb7QVtssbhh39q-EG3NTTJpFwqLVNPwCrz9i25bQrEAmEZoK7ymkYmlFxb6-OFQl0CYJ3wgG4--6Wy2Ceem96DbLFV4bOj3A-aTyMdyD6vU0yOIWgVMq7DsXmPzF-jugW5KuamggKjdsmhF4vnlyix5eXqUPKVuHh4z2gDCZZ0EHxRvUq83u8p4f5iL4cEi11peT1fJOhKfOJowt4hMz0ZfZMe7uIThsTionBcZfJbPAhvNomGjU7uGlTjpXhGNdzQs0nNRMT5nB3_k67u5Q&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+      imageUrl: "images/biological_science_area_faculty_of_sciences_obafemi_awolowo_university.jpg"
     },
     {
       id: "faculty_of_social_sciences_obafemi_awolowo_university",
@@ -389,7 +389,70 @@ const RAW_CAMPUS_DATA = {
       description: "Faculty of Social Sciences, Obafemi Awolowo University is an academic facility within the university environment.",
       lat: 7.521239899999999,
       lng: 4.5225092,
-      imageUrl: "https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=Ab43m-swvRTmS--7nEAMe5ghB6MpBObomutWpFhih1UT63sX7VyiqQWunHCSis08WpPy5G6rDImVydaKLbVnbJKva31br4Kxs1BCKCaFLC7ty5MfcV2t7mMdYWXe66ROi8T7JX8YsN4NcwCDo2Q5Q_DfkfReAVXLLEKVjS8filxoXQuxJ5r9StNCmyNAeEUGb63r3rAhrs2sY9tQhOxsm51fahwkHW8lmv8DJpt5dRaGKdKAMVnx-WdFu9IHaNlc1tOf4zpaB5u0grc3m0vBgoi7JS9vn-eEHFejTpJ0FOeoJnwfFg&key=AIzaSyDG0AdI940o9g9lAqthZtWGR45kMfZPFoc"
+      imageUrl: "images/faculty_of_social_sciences_obafemi_awolowo_university.jpg"
+    },
+    {
+      id: "bus_stop_2",
+      name: "Bus Stop 2",
+      aliases: ["bus stop 2", "sub bus stop", "second bus stop", "sub terminal", "korope park 2"],
+      type: "transport",
+      description: "A major transit terminal on campus located close to the Student Union Building (SUB), serving as a primary boarding point for campus shuttle buses (Korope) and taxis transporting students to different residential halls and academic blocks.",
+      lat: 7.5176082,
+      lng: 4.5221937
+    },
+    {
+      id: "chemical_engineering_lecture_theatre",
+      name: "Chemical Engineering Lecture Theatre",
+      aliases: ["chemical engineering lecture theatre", "celt", "chemical engineering lt", "chem eng lt", "chem tech lt"],
+      type: "academic",
+      description: "A modern, well-equipped academic auditorium situated within the Faculty of Technology, dedicated to hosting chemical engineering lectures, seminars, student defense presentations, and major departmental events.",
+      lat: 7.5193482,
+      lng: 4.528701
+    },
+    {
+      id: "oau_staff_quarters_gate_security_post",
+      name: "OAU Staff Quarters Gate Security Post",
+      aliases: ["oau staff quarters gate security post", "staff quarters gate", "quarters gate", "staff quarters security post", "staff quarters checkpoint"],
+      type: "landmark",
+      description: "A secured access control checkpoint situated at the entrance of the OAU Staff Quarters, staffed 24/7 by university security personnel to regulate entry and maintain safety within the faculty residential quarters.",
+      lat: 7.5195943,
+      lng: 4.5323669
+    },
+    {
+      id: "ict_centre",
+      name: "ICT Centre",
+      aliases: ["ict centre", "ict center", "oau ict center", "computer centre", "information technology center", "central ict block"],
+      type: "facility",
+      description: "The central hub for the university's information and communications technology infrastructure, housing compute servers, internet access facilities, e-learning classrooms, and specialized IT support offices for the OAU community.",
+      lat: 7.5177797,
+      lng: 4.526445
+    },
+    {
+      id: "moremi_garden",
+      name: "Moremi Garden",
+      aliases: ["moremi garden", "moremi gardens", "moremi recreation center", "moremi park"],
+      type: "landmark",
+      description: "A serene, beautifully landscaped recreational garden located adjacent to Moremi Hall, featuring lush green lawns, shade trees, and walking paths ideal for relaxation, reading, and student gatherings.",
+      lat: 7.5205243,
+      lng: 4.517935
+    },
+    {
+      id: "mathematics_department_yellow_house",
+      name: "Obafemi Awolowo University Mathematics Department",
+      aliases: ["obafemi awolowo university mathematics department", "mathematics department", "maths dept", "yellow house", "dept of mathematics", "math department"],
+      type: "academic",
+      description: "The Department of Mathematics at Obafemi Awolowo University, housed in the iconic 'Yellow House' building. It is a key academic department providing comprehensive mathematical education and training across all faculties.",
+      lat: 7.5197308,
+      lng: 4.5204433
+    },
+    {
+      id: "boo_lecture_theatres",
+      name: "BOO Lecture Theatres (BOOA/B/C)",
+      aliases: ["boo lecture theatres", "boo a b c", "booa b c", "boo lt", "boo hall", "boo lecture halls"],
+      type: "academic",
+      description: "The BOO Lecture Theatres, consisting of BOO A, BOO B, and BOO C, are prominent large-capacity lecture auditoriums widely used for introductory undergraduate lectures, massive joint university classes, and administrative examinations.",
+      lat: 7.5190345,
+      lng: 4.5227804
     }
   ],
 

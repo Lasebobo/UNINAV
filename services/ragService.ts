@@ -127,6 +127,12 @@ export function detectLocationIntent(query: string): LocationIntent {
     /\bnearest\s+route\b/,
     /\bgoing\s+to\s+the\b/,
     /\bi\s+want\s+directions\b/,
+    /\bgo\s+to\b/,
+    /\bnavigate\b/,
+    /\bdirections?\b/,
+    /\breach\b/,
+    /\bget\s+to\b/,
+    /\bmap\s+to\b/,
   ];
 
   if (
@@ -370,7 +376,19 @@ export const processQuery = async (
     };
   }
 
-  const intent = detectLocationIntent(userQuery);
+  let intent = detectLocationIntent(userQuery);
+
+  // If the query is just a direct location name/alias (e.g., "Library" or "Fajuyi Hall"),
+  // promote it to a description intent so they get the location card + directions prompt.
+  const isDirectLocationName = allLocations.some(loc => {
+    const nameLower = loc.name.toLowerCase();
+    const cleanQuery = lowerQuery.replace(/^(the|a|an)\s+/i, '').trim();
+    return nameLower === cleanQuery || loc.aliases.some(alias => alias.toLowerCase() === cleanQuery);
+  });
+
+  if (isDirectLocationName && intent === 'none') {
+    intent = 'description';
+  }
 
   // =========================================================================
   // MODE A — DESCRIPTION ONLY
@@ -416,8 +434,12 @@ Question: ${userQuery}`;
     // We only use `suggestedLocationId` that was inferred from the original user
     // query (above) so the UI will not pick a location unless the user asked for it.
 
+    const destLoc = allLocations.find(l => l.id === suggestedLocationId);
+    const locationName = destLoc ? destLoc.name : 'this location';
+    const answerWithSuggestion = response.text + `\n\n🗺️ Tap **Get Directions** below to calculate a walking route to **${locationName}**, or **View on Map** to see its location.`;
+
     return {
-      answer: response.text,
+      answer: answerWithSuggestion,
       context: contextStrings,
       suggestedLocationId: suggestedLocationId, // only from the user's original query
       isDescriptionMode: true,       // Signals the UI to show "Get Directions" button
@@ -480,7 +502,7 @@ Question: ${userQuery}`;
   // This is the final catch-all; the LLM must NEVER generate walking steps.
   // =========================================================================
   const isNavigationQuery = lowerQuery.match(
-    /\b(directions?|route|navigate|how\s+to\s+get|how\s+do\s+i\s+get|take\s+me\s+to|guide\s+me|get\s+to|walk\s+to|travel\s+to)\b/
+    /\b(directions?|route|navigate|how\s+to\s+get|how\s+do\s+i\s+get|take\s+me\s+to|guide\s+me|get\s+to|walk\s+to|travel\s+to|go\s+to|reach|map\s+to)\b/
   );
 
   if (isNavigationQuery) {

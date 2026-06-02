@@ -401,8 +401,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         {/* ---- Action buttons row ---- */}
         <div className="flex flex-wrap gap-2 mt-1.5">
 
-          {/* Mode A — Get Directions button */}
-          {isBot && isDescriptionMode && !isDirectionsMode && suggestedLocName && onGetDirections && (
+          {/* Get Directions button */}
+          {isBot && !isDirectionsMode && suggestedLocName && onGetDirections && (
             <button
               id={`get-directions-${message.id}`}
               onClick={() => onGetDirections(suggestedLocName)}
