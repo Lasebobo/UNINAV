@@ -34,10 +34,15 @@ export interface RouteResult {
 
 /** Strips HTML tags returned by Google (e.g. <b>, <div>) from instruction strings */
 function stripHtml(html: string): string {
+  if (!html) return '';
   return html
-    .replace(/<b>/gi, '').replace(/<\/b>/gi, '')
-    .replace(/<div[^>]*>/gi, ' ').replace(/<\/div>/gi, '')
-    .replace(/<wbr\/>/gi, '')
+    .replace(/<b>/gi, '')
+    .replace(/<\/b>/gi, '')
+    .replace(/<div[^>]*>/gi, ' ')
+    .replace(/<\/div>/gi, '')
+    .replace(/<wbr\s*\/?>/gi, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
     .replace(/<[^>]*>/g, '')
     .replace(/\s+/g, ' ')
     .trim();
@@ -106,32 +111,52 @@ function getRoadName(name: string | undefined): string {
   return trimmed && trimmed.length > 0 ? trimmed : 'the campus road';
 }
 
+function getCompassDirection(bearing: number): string {
+  const directions = ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'];
+  const index = Math.round(bearing / 45) % 8;
+  return directions[index];
+}
+
 function buildOsrmInstruction(step: any): string {
   const roadName = getRoadName(step.name);
   const modifier = (step.maneuver?.modifier ?? '').toLowerCase();
   const distance = formatDistance(step.distance ?? 0);
   const type = step.maneuver?.type;
+  
+  const bearing = step.maneuver?.bearing_after;
+  const compassDir = typeof bearing === 'number' ? getCompassDirection(bearing) : '';
 
   if (type === 'depart') {
-    const direction = modifier || 'straight';
-    return `Head ${direction} on ${roadName} for ${distance}`;
+    const dirStr = compassDir ? ` heading ${compassDir}` : '';
+    return `Head${dirStr} on ${roadName} for ${distance}`;
   }
 
-  if (type === 'turn') {
-    if (modifier.includes('left')) {
-      return `Turn left onto ${roadName}`;
-    }
-    if (modifier.includes('right')) {
-      return `Turn right onto ${roadName}`;
-    }
-    if (modifier.includes('straight')) {
-      return `Continue straight on ${roadName} for ${distance}`;
-    }
-    return `Turn onto ${roadName}`;
+  if (type === 'arrive') {
+    return `Arrive at your destination on ${roadName}`;
   }
 
-  if (type === 'continue' || type === 'roundabout' || type === 'fork') {
+  if (type === 'turn' || type === 'ramp' || type === 'fork' || type === 'merge' || type === 'new name') {
+    let turnAction = 'Turn';
+    if (modifier === 'sharp left') turnAction = 'Turn sharp left';
+    else if (modifier === 'left') turnAction = 'Turn left';
+    else if (modifier === 'slight left') turnAction = 'Turn slight left';
+    else if (modifier === 'sharp right') turnAction = 'Turn sharp right';
+    else if (modifier === 'right') turnAction = 'Turn right';
+    else if (modifier === 'slight right') turnAction = 'Turn slight right';
+    else if (modifier === 'straight') return `Continue straight on ${roadName} for ${distance}`;
+    else if (modifier === 'uturn') turnAction = 'Make a U-turn';
+    
+    return `${turnAction} onto ${roadName}`;
+  }
+
+  if (type === 'continue') {
     return `Continue straight on ${roadName} for ${distance}`;
+  }
+
+  if (type === 'roundabout' || type === 'rotary') {
+    const exit = step.maneuver?.exit;
+    const exitStr = exit ? ` and take exit ${exit}` : '';
+    return `Enter the roundabout${exitStr} onto ${roadName}`;
   }
 
   return `Continue straight on ${roadName} for ${distance}`;

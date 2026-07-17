@@ -53,6 +53,49 @@ const findLocationInQuery = (query: string, locations: CampusLocation[]): string
   return undefined;
 };
 
+const findOriginAndDestination = (
+  query: string, 
+  locations: CampusLocation[]
+): { originId?: string; destinationId?: string } => {
+  const lowerQuery = query.toLowerCase();
+
+  const findId = (text: string) => {
+    // Sort by name length descending to avoid substring conflicts
+    const sorted = [...locations].sort((a, b) => b.name.length - a.name.length);
+    for (const loc of sorted) {
+      if (text.includes(loc.name.toLowerCase())) return loc.id;
+      for (const alias of loc.aliases) {
+        if (text.includes(alias.toLowerCase())) return loc.id;
+      }
+    }
+    return undefined;
+  };
+
+  // Match "from X to Y" pattern
+  const fromToMatch = lowerQuery.match(/from\s+(.+?)\s+to\s+(.+)/);
+  if (fromToMatch) {
+    const fromText = fromToMatch[1].trim();
+    const toText = fromToMatch[2].trim();
+    return {
+      originId: findId(fromText),
+      destinationId: findId(toText),
+    };
+  }
+
+  // Match "to Y from X" pattern
+  const toFromMatch = lowerQuery.match(/to\s+(.+?)\s+from\s+(.+)/);
+  if (toFromMatch) {
+    const toText = toFromMatch[1].trim();
+    const fromText = toFromMatch[2].trim();
+    return {
+      originId: findId(fromText),
+      destinationId: findId(toText),
+    };
+  }
+
+  return {};
+};
+
 const generateFallbackResponse = async (userQuery: string, allLocations: CampusLocation[]): Promise<{ answer: string; context: string[]; suggestedLocationId?: string }> => {
   const searchResults = await retrieveDocuments(userQuery, allLocations);
   const suggestedLocationId = findLocationInQuery(userQuery, allLocations);
@@ -134,6 +177,13 @@ export function detectLocationIntent(query: string): LocationIntent {
     /\breach\b/,
     /\bget\s+to\b/,
     /\bmap\s+to\b/,
+    /\bwalk\s+from\b/,
+    /\bfrom\b.+\bto\b/,
+    /\bwalking\s+from\b/,
+    /\bgo\s+from\b/,
+    /\btravel\s+from\b/,
+    /\bget\s+from\b/,
+    /\bhow\s+far\s+(is|from)\b/,
   ];
 
   if (
@@ -488,10 +538,29 @@ Question: ${userQuery}`;
   if (intent === 'directions') {
     const destLoc = suggestedLocationId ? allLocations.find(l => l.id === suggestedLocationId) : null;
 
-    // Resolve origin & destination coordinates
-    const origin = userLocation ? getRoutingOrigin(userLocation) : undefined;
-    const destination = destLoc?.lat && destLoc?.lng
-      ? { lat: destLoc.lat, lng: destLoc.lng }
+    // Check if user specified a custom origin ("from X to Y" or "to Y from X")
+    const { originId, destinationId } = findOriginAndDestination(userQuery, allLocations);
+
+    // Override destination if explicitly stated in "from X to Y"
+    const resolvedDestId = destinationId ?? suggestedLocationId;
+    const resolvedDestLoc = resolvedDestId 
+      ? allLocations.find(l => l.id === resolvedDestId) 
+      : destLoc;
+
+    // Use custom origin location coords if user said "from X"
+    // Otherwise fall back to user's GPS location
+    const customOriginLoc = originId 
+      ? allLocations.find(l => l.id === originId) 
+      : null;
+
+    const origin = customOriginLoc?.lat && customOriginLoc?.lng
+      ? { lat: customOriginLoc.lat, lng: customOriginLoc.lng }  // Use stated origin
+      : userLocation 
+        ? getRoutingOrigin(userLocation)                          // Use GPS
+        : undefined;
+
+    const destination = resolvedDestLoc?.lat && resolvedDestLoc?.lng
+      ? { lat: resolvedDestLoc.lat, lng: resolvedDestLoc.lng }
       : null;
 
     // If we have real coordinates for both, hit the routing engines in parallel
@@ -500,8 +569,8 @@ Question: ${userQuery}`;
     if (origin && destination) {
       const { osrmRoute, googleRoute } = await fetchBothRoutes(origin, destination, onProgress);
       directionsPayload = {
-        locationId:   suggestedLocationId ?? '',
-        locationName: destLoc?.name ?? userQuery,
+        locationId:   resolvedDestId ?? '',
+        locationName: resolvedDestLoc?.name ?? userQuery,
         osrmRoute,
         googleRoute,
       };
@@ -509,7 +578,7 @@ Question: ${userQuery}`;
 
     // Build the text portion of the response
     let answerText: string;
-    const locationName = destLoc?.name ?? 'your destination';
+    const locationName = resolvedDestLoc?.name ?? 'your destination';
 
     if (!directionsPayload || (!directionsPayload.osrmRoute && !directionsPayload.googleRoute)) {
       // Both engines failed — use the prescribed fallback message
@@ -517,13 +586,14 @@ Question: ${userQuery}`;
     } else {
       // Show a brief intro — the actual numbered steps are rendered by the UI component
       const route = directionsPayload.osrmRoute ?? directionsPayload.googleRoute!;
-      answerText = `Here are walking directions to **${locationName}** (${route.totalDistance} · ${route.totalDuration}).`;
+      const originName = customOriginLoc?.name ?? 'your location';
+      answerText = `Here are walking directions from **${originName}** to **${locationName}** (${route.totalDistance} · ${route.totalDuration}).`;
     }
 
     return {
       answer: answerText,
       context: directionsPayload ? ['Routing engine (OSRM + Google Maps)'] : ['Routing engine unavailable'],
-      suggestedLocationId,
+      suggestedLocationId: resolvedDestId,
       directionsPayload,
     };
   }
@@ -542,9 +612,21 @@ Question: ${userQuery}`;
   if (isNavigationQuery) {
     // Resolve destination from query; fetch from routing engine only.
     // The LLM is NOT called here under any circumstances.
-    const navLocationId = getSuggestedLocation();
-    const navDest = navLocationId ? allLocations.find(l => l.id === navLocationId) : null;
-    const navOrigin = userLocation ? getRoutingOrigin(userLocation) : undefined;
+    const { originId, destinationId } = findOriginAndDestination(userQuery, allLocations);
+
+    const resolvedDestId = destinationId ?? getSuggestedLocation();
+    const navDest = resolvedDestId ? allLocations.find(l => l.id === resolvedDestId) : null;
+
+    const customOriginLoc = originId 
+      ? allLocations.find(l => l.id === originId) 
+      : null;
+
+    const navOrigin = customOriginLoc?.lat && customOriginLoc?.lng
+      ? { lat: customOriginLoc.lat, lng: customOriginLoc.lng }
+      : userLocation 
+        ? getRoutingOrigin(userLocation)
+        : undefined;
+
     const navDestCoords = navDest?.lat && navDest?.lng
       ? { lat: navDest.lat, lng: navDest.lng }
       : null;
@@ -553,7 +635,7 @@ Question: ${userQuery}`;
     if (navOrigin && navDestCoords) {
       const { osrmRoute, googleRoute } = await fetchBothRoutes(navOrigin, navDestCoords, onProgress);
       navPayload = {
-        locationId:   navLocationId ?? '',
+        locationId:   resolvedDestId ?? '',
         locationName: navDest?.name ?? 'your destination',
         osrmRoute,
         googleRoute,
@@ -561,6 +643,7 @@ Question: ${userQuery}`;
     }
 
     const navName = navDest?.name ?? 'your destination';
+    const originName = customOriginLoc?.name ?? 'your location';
 
     if (!navPayload || (!navPayload.osrmRoute && !navPayload.googleRoute)) {
       return {
@@ -568,15 +651,15 @@ Question: ${userQuery}`;
           ? `I couldn't load directions right now. Tap **View on Map** to navigate to **${navName}**.`
           : `I couldn't find a route for that. Try asking "How do I get to [location name]?" or open the map to browse all locations.`,
         context: ['Navigation safety guard — routing engine required'],
-        suggestedLocationId: navLocationId,
+        suggestedLocationId: resolvedDestId,
       };
     }
 
     const navRoute = navPayload.osrmRoute ?? navPayload.googleRoute!;
     return {
-      answer: `Here are walking directions to **${navName}** (${navRoute.totalDistance} · ${navRoute.totalDuration}).`,
+      answer: `Here are walking directions from **${originName}** to **${navName}** (${navRoute.totalDistance} · ${navRoute.totalDuration}).`,
       context: ['Routing engine (OSRM + Google Maps) — safety guard path'],
-      suggestedLocationId: navLocationId,
+      suggestedLocationId: resolvedDestId,
       directionsPayload: navPayload,
     };
   }
