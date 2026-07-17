@@ -47,6 +47,7 @@ export interface CampusLocation {
   lng?: number; // Real-world Longitude
   imageUrl?: string; // Preview image
   imageData?: string; // Base64 encoded image data
+  verified?: boolean; // Verified flag
 }
 
 export interface RouteInfo {

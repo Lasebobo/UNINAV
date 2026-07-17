@@ -223,6 +223,82 @@ async function startServer() {
     }
   });
 
+  app.post("/api/locations", async (req, res) => {
+    const { name, description, type, lat, lng } = req.body;
+
+    if (!name || !description || !type || lat === undefined || lng === undefined) {
+      return res.status(400).json({ error: "Missing required fields: name, description, type, lat, lng" });
+    }
+
+    // Coordinates bounding box check (OAU perimeter)
+    if (lat < 7.48 || lat > 7.54 || lng < 4.49 || lng > 4.55) {
+      return res.status(400).json({ error: "Location coordinates must be inside the OAU campus bounds." });
+    }
+
+    try {
+      const { prisma } = await import("./services/dbService");
+      
+      // Calculate coordsX and coordsY based on existing DB locations to maintain schematic map aspect
+      const locations = await prisma.location.findMany();
+      const validLocs = locations.filter(l => l.lat && l.lng);
+      const lats = validLocs.map(l => l.lat!);
+      const lngs = validLocs.map(l => l.lng!);
+      
+      // Include current new point in boundary calculation
+      lats.push(lat);
+      lngs.push(lng);
+
+      const minLat = Math.min(...lats);
+      const maxLat = Math.max(...lats);
+      const minLng = Math.min(...lngs);
+      const maxLng = Math.max(...lngs);
+
+      const latDiff = maxLat - minLat || 0.01;
+      const lngDiff = maxLng - minLng || 0.01;
+      
+      const paddedMinLat = minLat - latDiff * 0.1;
+      const paddedMaxLat = maxLat + latDiff * 0.1;
+      const paddedMinLng = minLng - lngDiff * 0.1;
+      const paddedMaxLng = maxLng + lngDiff * 0.1;
+
+      const paddedLatDiff = paddedMaxLat - paddedMinLat;
+      const paddedLngDiff = paddedMaxLng - paddedMinLng;
+
+      const coordsX = Number((((lng - paddedMinLng) / paddedLngDiff) * 100).toFixed(2));
+      const coordsY = Number((((paddedMaxLat - lat) / paddedLatDiff) * 100).toFixed(2));
+
+      // Generate a clean ID from the name
+      const cleanId = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || `custom_${Date.now()}`;
+      
+      let id = cleanId;
+      let counter = 1;
+      while (await prisma.location.findUnique({ where: { id } })) {
+        id = `${cleanId}_${counter}`;
+        counter++;
+      }
+
+      const newLoc = await prisma.location.create({
+        data: {
+          id,
+          name,
+          description,
+          type,
+          lat,
+          lng,
+          coordsX,
+          coordsY,
+          verified: false,
+          aliases: [name.toLowerCase()]
+        }
+      });
+
+      res.status(201).json(newLoc);
+    } catch (err) {
+      console.error("Error creating location:", err);
+      res.status(500).json({ error: "Failed to create public location" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

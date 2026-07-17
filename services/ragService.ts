@@ -10,7 +10,8 @@ const retrieveDocuments = async (query: string, allLocations: CampusLocation[] =
 
   allLocations.forEach(loc => {
     let score = 0;
-    const content = `Location: ${loc.name}. Type: ${loc.type}. Details: ${loc.description}. Aliases: ${loc.aliases.join(', ')}`;
+    const verificationStatus = loc.verified === false ? "Unverified (Community Added)" : "Verified";
+    const content = `Location: ${loc.name}. Type: ${loc.type}. Details: ${loc.description}. Status: ${verificationStatus}. Aliases: ${loc.aliases.join(', ')}`;
     const contentLower = content.toLowerCase();
     queryTokens.forEach(token => { if (contentLower.includes(token)) score += 3; });
     if (score > 0) results.push({ content, score, source: 'Location DB' });
@@ -185,21 +186,30 @@ export const processQuery = async (
   
   // Fetch locations once per query
   const { data: dbLocations } = await supabase.from('Location').select('*');
-  const allLocations: CampusLocation[] = [
-    ...(dbLocations || []).map(l => ({ 
-        id: l.id,
-        name: l.name,
-        aliases: l.aliases,
-        type: l.type as any,
-        description: l.description,
-        coords: { x: l.coordsX, y: l.coordsY },
-        lat: l.lat ?? undefined,
-        lng: l.lng ?? undefined,
-        imageUrl: l.imageUrl ?? undefined,
-        imageData: l.imageData ?? undefined
-    })), 
-    ...customLocations
-  ];
+  
+  const allLocationsMap = new Map<string, CampusLocation>();
+  (dbLocations || []).forEach(l => {
+    allLocationsMap.set(l.id, {
+      id: l.id,
+      name: l.name,
+      aliases: l.aliases,
+      type: l.type as any,
+      description: l.description,
+      coords: { x: l.coordsX, y: l.coordsY },
+      lat: l.lat ?? undefined,
+      lng: l.lng ?? undefined,
+      imageUrl: l.imageUrl ?? undefined,
+      imageData: l.imageData ?? undefined,
+      verified: l.verified ?? true
+    });
+  });
+
+  // Override or add from customLocations (e.g. private or newly added locations)
+  customLocations.forEach(loc => {
+    allLocationsMap.set(loc.id, loc);
+  });
+
+  const allLocations = Array.from(allLocationsMap.values());
   
   const isGenericOauQuery = (query: string) => {
     const normalized = query.trim().toLowerCase();
@@ -211,8 +221,31 @@ export const processQuery = async (
       return undefined;
     }
 
+    // 1. Try to find location in the current user query
     let locId = findLocationInQuery(userQuery, allLocations);
-    if (!locId && answerText) locId = findLocationInQuery(answerText, allLocations);
+    
+    // 2. Try to find in the generated answer text (if provided)
+    if (!locId && answerText) {
+      locId = findLocationInQuery(answerText, allLocations);
+    }
+    
+    // 3. Fall back to the most recent suggested location from the chat history context
+    if (!locId && history && history.length > 0) {
+      for (let i = history.length - 1; i >= 0; i--) {
+        const msg = history[i];
+        if (msg.suggestedLocationId) {
+          locId = msg.suggestedLocationId;
+          break;
+        }
+        // Also scan previous message content for a location name
+        const contentLocId = findLocationInQuery(msg.content, allLocations);
+        if (contentLocId) {
+          locId = contentLocId;
+          break;
+        }
+      }
+    }
+    
     return locId;
   };
 
@@ -414,7 +447,8 @@ RULES (strictly enforced):
 - NEVER mention landmarks that are not in the provided context.
 - NEVER estimate distances or times.
 - NEVER display raw latitude/longitude coordinates.
-- Keep the total response to 3 sentences.`;
+- Keep the total response to 3 sentences.
+- If the location's status is "Unverified (Community Added)" in the context, let the 3rd sentence explicitly state that it is a community-added location and has not been verified yet.`;
 
     const prompt = `Context:
 ${contextStrings.join('\n')}
@@ -607,6 +641,7 @@ Question: ${userQuery}`;
     - NEVER state or guess the user's current location.
     - NEVER display raw latitude/longitude coordinates.
     - Keep responses concise and factual.
+    - If the location's status is "Unverified (Community Added)" in the context, explicitly mention that it is a community-submitted location and has not been verified yet.
   `;
   const prompt = `Context:\n${contextStrings.join('\n')}\n\nQuestion about Obafemi Awolowo University (OAU): ${userQuery}`;
 

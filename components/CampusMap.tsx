@@ -80,6 +80,7 @@ interface CampusMapProps {
   isSidebarOpen?: boolean;
   onCloseSidebar?: () => void;
   onOpenSidebar?: () => void;
+  onAddLocation?: (loc: { name: string; description: string; type: string; isPublic: boolean; lat: number; lng: number }) => Promise<void>;
 }
 
 export const CampusMap: React.FC<CampusMapProps> = ({
@@ -91,6 +92,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
   isSidebarOpen,
   onCloseSidebar,
   onOpenSidebar,
+  onAddLocation,
 }) => {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const mapControllerRef = useRef<{ repositionToUser: () => void }>(null);
@@ -99,6 +101,15 @@ export const CampusMap: React.FC<CampusMapProps> = ({
   const [routeResult, setRouteResult] = useState<RouteResult | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [hoveredLocationId, setHoveredLocationId] = useState<string | null>(null);
+
+  // Add Location Form States
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addLocName, setAddLocName] = useState('');
+  const [addLocDescription, setAddLocDescription] = useState('');
+  const [addLocType, setAddLocType] = useState('custom');
+  const [addLocIsPublic, setAddLocIsPublic] = useState(false);
+  const [isSubmittingAdd, setIsSubmittingAdd] = useState(false);
+  const [addLocError, setAddLocError] = useState<string | null>(null);
   const routeFetchId = useRef(0);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [tooltipDirections, setTooltipDirections] = useState<Record<string, 'top' | 'bottom'>>({})
@@ -124,9 +135,15 @@ export const CampusMap: React.FC<CampusMapProps> = ({
   const getPinStyle = (type: string) => typeConfig[type] || { color: '#3b82f6', label: 'Building' };
 
   // Build custom Leaflet DivIcon — pin circle + label text below
-  const makeIcon = (color: string, isActive: boolean, name: string) => {
+  const makeIcon = (color: string, isActive: boolean, name: string, isVerified?: boolean) => {
     const size = isActive ? 34 : 26;
     const svgSize = isActive ? 16 : 12;
+    const isUnverified = isVerified === false;
+    const borderStyle = isUnverified ? '2.5px dashed #f59e0b' : '2.5px solid white';
+    const labelBg = isActive ? color : (isUnverified ? '#fffbeb' : 'rgba(255,255,255,0.95)');
+    const labelBorder = isActive ? color : (isUnverified ? '#f59e0b' : 'rgba(0,0,0,0.08)');
+    const labelColor = isActive ? '#fff' : (isUnverified ? '#d97706' : '#1e293b');
+
     return L.divIcon({
       html: `
         <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
@@ -135,7 +152,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
             width:${size}px;height:${size}px;
             background:${color};
             border-radius:50%;
-            border:2.5px solid white;
+            border:${borderStyle};
             box-shadow: 0 2px 8px rgba(0,0,0,0.28);
             display:flex;align-items:center;justify-content:center;
             cursor:pointer;
@@ -146,8 +163,8 @@ export const CampusMap: React.FC<CampusMapProps> = ({
             </svg>
           </div>
           <div style="
-            background:${isActive ? color : 'rgba(255,255,255,0.95)'};
-            color:${isActive ? '#fff' : '#1e293b'};
+            background:${labelBg};
+            color:${labelColor};
             font-size:10px;
             font-weight:${isActive ? 700 : 600};
             font-family:system-ui,sans-serif;
@@ -158,7 +175,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
             overflow:hidden;
             text-overflow:ellipsis;
             box-shadow:0 1px 4px rgba(0,0,0,0.18);
-            border:1px solid ${isActive ? color : 'rgba(0,0,0,0.08)'};
+            border:1px solid ${labelBorder};
             pointer-events:none;
           ">${name}</div>
         </div>`,
@@ -277,7 +294,21 @@ export const CampusMap: React.FC<CampusMapProps> = ({
 
               {/* User location dot */}
               {userLocation && (
-                <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon} />
+                <Marker 
+                  position={[userLocation.lat, userLocation.lng]} 
+                  icon={userIcon} 
+                  zIndexOffset={9999}
+                  eventHandlers={{
+                    click: () => {
+                      setAddLocError(null);
+                      setAddLocName('');
+                      setAddLocDescription('');
+                      setAddLocType('custom');
+                      setAddLocIsPublic(false);
+                      setIsAddModalOpen(true);
+                    }
+                  }}
+                />
               )}
 
               {/* Campus location markers */}
@@ -289,7 +320,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                   <Marker
                     key={loc.id}
                     position={[loc.lat, loc.lng]}
-                    icon={makeIcon(style.color, isActive, loc.name)}
+                    icon={makeIcon(style.color, isActive, loc.name, loc.verified)}
                     eventHandlers={{ 
                       click: () => onLocationSelect(loc),
                       mouseover: (e: any) => {
@@ -377,6 +408,22 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                             letterSpacing: '0.04em',
                             marginBottom: '5px',
                           }}>{style.label}</div>
+                          {loc.verified === false && (
+                            <div style={{
+                              display: 'inline-block',
+                              background: '#fffbeb',
+                              color: '#d97706',
+                              fontSize: '9px',
+                              fontWeight: 700,
+                              padding: '1px 6px',
+                              borderRadius: '8px',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.04em',
+                              marginBottom: '5px',
+                              marginLeft: '6px',
+                              border: '1px solid #f59e0b'
+                            }}>UNVERIFIED</div>
+                          )}
                           {loc.description && (
                             <p style={{
                               fontSize: '11px',
@@ -530,6 +577,13 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                 />
                 <h3 className="text-[15px] font-bold text-gray-900 leading-tight">{activeDestination.name}</h3>
               </div>
+
+              {activeDestination.verified === false && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 text-[11px] rounded-lg p-2.5 mb-3 flex items-start gap-1.5 font-medium leading-normal">
+                  <span className="shrink-0">⚠️</span>
+                  <span>This is a community-submitted location and has not been verified yet. Use with caution.</span>
+                </div>
+              )}
               <p className="text-[12px] text-gray-500 leading-snug mb-4">{activeDestination.description}</p>
 
               <div className="flex gap-2">
@@ -629,6 +683,168 @@ export const CampusMap: React.FC<CampusMapProps> = ({
 
       {fullscreenImage && (
         <ImageModal imageUrl={fullscreenImage} onClose={() => setFullscreenImage(null)} />
+      )}
+
+      {/* Add Location Modal */}
+      {isAddModalOpen && userLocation && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full border border-gray-100 flex flex-col animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <MapPin className="text-blue-600 w-5 h-5" />
+                Add Campus Location
+              </h3>
+              <button 
+                onClick={() => setIsAddModalOpen(false)} 
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+              Add a new custom location at your current position (<strong>{userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}</strong>).
+            </p>
+
+            {addLocError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl p-3 mb-4 font-medium leading-normal flex items-start gap-1.5">
+                <span className="shrink-0">⚠️</span>
+                <span>{addLocError}</span>
+              </div>
+            )}
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (!addLocName.trim()) {
+                setAddLocError("Please enter a name for the location.");
+                return;
+              }
+              if (!addLocDescription.trim()) {
+                setAddLocError("Please enter a description.");
+                return;
+              }
+              if (!onAddLocation) {
+                setAddLocError("Location additions are currently disabled.");
+                return;
+              }
+
+              setIsSubmittingAdd(true);
+              setAddLocError(null);
+              try {
+                await onAddLocation({
+                  name: addLocName.trim(),
+                  description: addLocDescription.trim(),
+                  type: addLocType,
+                  isPublic: addLocIsPublic,
+                  lat: userLocation.lat,
+                  lng: userLocation.lng
+                });
+                setIsAddModalOpen(false);
+              } catch (err: any) {
+                setAddLocError(err.message || "An unexpected error occurred.");
+              } finally {
+                setIsSubmittingAdd(false);
+              }
+            }} className="flex flex-col gap-3.5">
+              <div>
+                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Computer Science Hub"
+                  value={addLocName}
+                  onChange={(e) => setAddLocName(e.target.value)}
+                  className="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Type</label>
+                <select
+                  value={addLocType}
+                  onChange={(e) => setAddLocType(e.target.value)}
+                  className="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                >
+                  <option value="custom">Landmark / Custom</option>
+                  <option value="academic">Academic / Building</option>
+                  <option value="facility">Facility</option>
+                  <option value="residential">Residential / Department</option>
+                  <option value="transport">Transport Hub</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Description</label>
+                <textarea
+                  placeholder="Describe what the place is or what goes on here..."
+                  value={addLocDescription}
+                  onChange={(e) => setAddLocDescription(e.target.value)}
+                  rows={3}
+                  className="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400 resize-none"
+                  required
+                />
+              </div>
+
+              <div className="border-t border-gray-100 pt-3.5 mt-1.5">
+                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2.5">Visibility</label>
+                <div className="flex gap-3">
+                  <label className={`flex-1 border rounded-xl p-3 flex flex-col cursor-pointer transition-all ${!addLocIsPublic ? 'border-blue-500 bg-blue-50/40' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <input
+                        type="radio"
+                        checked={!addLocIsPublic}
+                        onChange={() => setAddLocIsPublic(false)}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-xs font-bold text-gray-800">Private</span>
+                    </div>
+                    <span className="text-[10px] text-gray-500 leading-normal pl-5">Only visible on your device. Stored locally.</span>
+                  </label>
+
+                  <label className={`flex-1 border rounded-xl p-3 flex flex-col cursor-pointer transition-all ${addLocIsPublic ? 'border-amber-500 bg-amber-50/40' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <input
+                        type="radio"
+                        checked={addLocIsPublic}
+                        onChange={() => setAddLocIsPublic(true)}
+                        className="text-amber-600 focus:ring-amber-500"
+                      />
+                      <span className="text-xs font-bold text-gray-800">Public</span>
+                    </div>
+                    <span className="text-[10px] text-gray-500 leading-normal pl-5">Shared with everyone. Marks location as unverified.</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 border-t border-gray-100 pt-4 mt-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+                  disabled={isSubmittingAdd}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={`px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 ${
+                    addLocIsPublic ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                  disabled={isSubmittingAdd}
+                >
+                  {isSubmittingAdd ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Location'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

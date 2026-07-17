@@ -16,6 +16,7 @@ model Location {
   coordsY     Float
   lat         Float?
   lng         Float?
+  verified    Boolean  @default(true)
   imageUrl    String?
   imageData   String?  // Base64 encoded image data
 
