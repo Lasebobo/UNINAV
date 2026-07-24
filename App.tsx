@@ -431,64 +431,49 @@ const App: React.FC = () => {
     name: string;
     description: string;
     type: string;
-    isPublic: boolean;
     lat: number;
     lng: number;
   }) => {
-    if (newLoc.isPublic) {
-      const res = await fetch("/api/locations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newLoc.name,
-          description: newLoc.description,
-          type: newLoc.type,
-          lat: newLoc.lat,
-          lng: newLoc.lng
-        })
-      });
+    const savedPrivate = localStorage.getItem('uninav_private_locations');
+    const privateLocs: CampusLocation[] = savedPrivate ? JSON.parse(savedPrivate) : [];
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to create public location");
-      }
+    const cleanId = newLoc.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || `private_${Date.now()}`;
+    const id = `private_${cleanId}_${Date.now()}`;
 
-      const created: CampusLocation = await res.json();
-      
-      setLocations(prev => {
-        const locsMap: Record<string, CampusLocation> = {};
-        prev.forEach(l => { locsMap[l.id] = l; });
-        locsMap[created.id] = created;
-        return Object.values(locsMap);
-      });
-    } else {
-      const savedPrivate = localStorage.getItem('uninav_private_locations');
-      const privateLocs: CampusLocation[] = savedPrivate ? JSON.parse(savedPrivate) : [];
+    const createdPrivate: CampusLocation = {
+      id,
+      name: newLoc.name,
+      aliases: [newLoc.name.toLowerCase()],
+      type: newLoc.type as any,
+      description: newLoc.description,
+      coords: { x: 0, y: 0 },
+      lat: newLoc.lat,
+      lng: newLoc.lng,
+      verified: true
+    };
 
-      const cleanId = newLoc.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || `private_${Date.now()}`;
-      const id = `private_${cleanId}_${Date.now()}`;
+    const updatedPrivate = [...privateLocs, createdPrivate];
+    localStorage.setItem('uninav_private_locations', JSON.stringify(updatedPrivate));
 
-      const createdPrivate: CampusLocation = {
-        id,
-        name: newLoc.name,
-        aliases: [newLoc.name.toLowerCase()],
-        type: newLoc.type as any,
-        description: newLoc.description,
-        coords: { x: 0, y: 0 },
-        lat: newLoc.lat,
-        lng: newLoc.lng,
-        verified: true
-      };
+    setLocations(prev => {
+      const locsMap: Record<string, CampusLocation> = {};
+      prev.forEach(l => { locsMap[l.id] = l; });
+      locsMap[createdPrivate.id] = createdPrivate;
+      return Object.values(locsMap);
+    });
+  };
 
-      const updatedPrivate = [...privateLocs, createdPrivate];
-      localStorage.setItem('uninav_private_locations', JSON.stringify(updatedPrivate));
-
-      setLocations(prev => {
-        const locsMap: Record<string, CampusLocation> = {};
-        prev.forEach(l => { locsMap[l.id] = l; });
-        locsMap[createdPrivate.id] = createdPrivate;
-        return Object.values(locsMap);
-      });
+  const handleDeleteLocation = (id: string) => {
+    const savedPrivate = localStorage.getItem('uninav_private_locations');
+    const privateLocs: CampusLocation[] = savedPrivate ? JSON.parse(savedPrivate) : [];
+    
+    const updatedPrivate = privateLocs.filter(l => l.id !== id);
+    localStorage.setItem('uninav_private_locations', JSON.stringify(updatedPrivate));
+    
+    setLocations(prev => prev.filter(l => l.id !== id));
+    
+    if (activeDestination?.id === id) {
+      setActiveDestination(null);
     }
   };
 
@@ -701,6 +686,7 @@ const App: React.FC = () => {
               onCloseSidebar={() => setIsSidebarOpen(false)}
               onOpenSidebar={() => setIsSidebarOpen(true)}
               onAddLocation={handleAddLocation}
+              onDeleteLocation={handleDeleteLocation}
             />
           </div>
         ) : (

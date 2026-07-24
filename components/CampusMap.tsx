@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef, useImperativeHandle } from 'react';
 import { CampusLocation } from '../types';
-import { Clock, Navigation, MapPin, X, Layers, Map as MapIcon } from 'lucide-react';
+import { Clock, Navigation, MapPin, X, Layers, Map as MapIcon, Trash2 } from 'lucide-react';
 import { ImageModal } from './ImageModal';
 import { fetchGoogleRoute, RouteResult } from '../services/routeService';
 import { getRoutingOrigin, isUserOnCampus, OAU_MAIN_GATE } from '../utils/locationUtils';
@@ -80,7 +80,8 @@ interface CampusMapProps {
   isSidebarOpen?: boolean;
   onCloseSidebar?: () => void;
   onOpenSidebar?: () => void;
-  onAddLocation?: (loc: { name: string; description: string; type: string; isPublic: boolean; lat: number; lng: number }) => Promise<void>;
+  onAddLocation?: (loc: { name: string; description: string; type: string; lat: number; lng: number }) => Promise<void>;
+  onDeleteLocation?: (id: string) => void;
 }
 
 export const CampusMap: React.FC<CampusMapProps> = ({
@@ -93,6 +94,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
   onCloseSidebar,
   onOpenSidebar,
   onAddLocation,
+  onDeleteLocation,
 }) => {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const mapControllerRef = useRef<{ repositionToUser: () => void }>(null);
@@ -107,7 +109,6 @@ export const CampusMap: React.FC<CampusMapProps> = ({
   const [addLocName, setAddLocName] = useState('');
   const [addLocDescription, setAddLocDescription] = useState('');
   const [addLocType, setAddLocType] = useState('custom');
-  const [addLocIsPublic, setAddLocIsPublic] = useState(false);
   const [isSubmittingAdd, setIsSubmittingAdd] = useState(false);
   const [addLocError, setAddLocError] = useState<string | null>(null);
   const routeFetchId = useRef(0);
@@ -304,7 +305,6 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                       setAddLocName('');
                       setAddLocDescription('');
                       setAddLocType('custom');
-                      setAddLocIsPublic(false);
                       setIsAddModalOpen(true);
                     }
                   }}
@@ -594,6 +594,20 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                   <Navigation size={13} />
                   Directions
                 </button>
+                {activeDestination.id.startsWith('private_') && onDeleteLocation && (
+                  <button
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to delete "${activeDestination.name}"?`)) {
+                        onDeleteLocation(activeDestination.id);
+                      }
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-[12px] font-semibold py-2.5 px-3 rounded-lg border border-red-200 transition-colors"
+                    title="Delete custom location"
+                  >
+                    <Trash2 size={13} />
+                    Delete
+                  </button>
+                )}
               </div>
 
               {/* Directions Panel */}
@@ -735,7 +749,6 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                   name: addLocName.trim(),
                   description: addLocDescription.trim(),
                   type: addLocType,
-                  isPublic: addLocIsPublic,
                   lat: userLocation.lat,
                   lng: userLocation.lng
                 });
@@ -785,37 +798,6 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                 />
               </div>
 
-              <div className="border-t border-gray-100 pt-3.5 mt-1.5">
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2.5">Visibility</label>
-                <div className="flex gap-3">
-                  <label className={`flex-1 border rounded-xl p-3 flex flex-col cursor-pointer transition-all ${!addLocIsPublic ? 'border-blue-500 bg-blue-50/40' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <input
-                        type="radio"
-                        checked={!addLocIsPublic}
-                        onChange={() => setAddLocIsPublic(false)}
-                        className="text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-xs font-bold text-gray-800">Private</span>
-                    </div>
-                    <span className="text-[10px] text-gray-500 leading-normal pl-5">Only visible on your device. Stored locally.</span>
-                  </label>
-
-                  <label className={`flex-1 border rounded-xl p-3 flex flex-col cursor-pointer transition-all ${addLocIsPublic ? 'border-amber-500 bg-amber-50/40' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <input
-                        type="radio"
-                        checked={addLocIsPublic}
-                        onChange={() => setAddLocIsPublic(true)}
-                        className="text-amber-600 focus:ring-amber-500"
-                      />
-                      <span className="text-xs font-bold text-gray-800">Public</span>
-                    </div>
-                    <span className="text-[10px] text-gray-500 leading-normal pl-5">Shared with everyone. Marks location as unverified.</span>
-                  </label>
-                </div>
-              </div>
-
               <div className="flex justify-end gap-3 border-t border-gray-100 pt-4 mt-3 shrink-0">
                 <button
                   type="button"
@@ -827,9 +809,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className={`px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 ${
-                    addLocIsPublic ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
+                  className="px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700"
                   disabled={isSubmittingAdd}
                 >
                   {isSubmittingAdd ? (
