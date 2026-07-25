@@ -177,8 +177,8 @@ export function detectLocationIntent(query: string): LocationIntent {
     /\breach\b/,
     /\bget\s+to\b/,
     /\bmap\s+to\b/,
-    /\bwalk\s+from\b/,
-    /\bfrom\b.+\bto\b/,
+    /\bwalk\s+from\b/i,
+    /\bfrom\b.+\bto\b/i,
     /\bwalking\s+from\b/,
     /\bgo\s+from\b/,
     /\btravel\s+from\b/,
@@ -587,7 +587,7 @@ Question: ${userQuery}`;
       // Show a brief intro — the actual numbered steps are rendered by the UI component
       const route = directionsPayload.osrmRoute ?? directionsPayload.googleRoute!;
       const originName = customOriginLoc?.name ?? 'your location';
-      answerText = `Here are walking directions from **${originName}** to **${locationName}** (${route.totalDistance} · ${route.totalDuration}).`;
+      answerText = `Here are walking directions from **${originName}** to **${locationName}** (${route.totalDistance} · ${route.totalDuration}).\n\n📌 **Campus Transport Pricing:**\n• **Kek (Tricycle):** 2 tickets\n• **Shuttle:** 1 ticket within campus (or 2 tickets from the campus gate to anywhere on campus, except to the SUB bus stop and Bus Stop 2).`;
     }
 
     return {

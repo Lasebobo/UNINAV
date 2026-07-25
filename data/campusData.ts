@@ -282,15 +282,6 @@ const RAW_CAMPUS_DATA = {
       imageUrl: "images/awovarsity_hall.jpg"
     },
     {
-      id: "cooperative_hall",
-      name: "Cooperative Hall",
-      aliases: ["cooperative hall"],
-      type: "landmark",
-      description: "Cooperative Hall is a recognized landmark location.",
-      lat: 6.5016659,
-      lng: 3.3293769
-    },
-    {
       id: "alex_duduyemi_lecture_theater",
       name: "Alex Duduyemi Lecture Theater",
       aliases: ["alex duduyemi lecture theater"],
@@ -456,39 +447,104 @@ const RAW_CAMPUS_DATA = {
     }
   ],
 
-  // routes: [
-  //   {
-  //     id: "r1",
-  //     fromId: "new_senate_building",
-  //     toId: "sub",
-  //     distance: "600m",
-  //     timeWalking: "8 mins",
-  //     shuttleAvailable: true,
-  //     shuttleFare: "₦50",
-  //     description: "Walk down Road 1, past the Motion Ground turnoff. The SUB is on your right."
-  //   },
-  //   {
-  //     id: "r2",
-  //     fromId: "moremi",
-  //     toId: "spider_building",
-  //     distance: "1.2km",
-  //     timeWalking: "15 mins",
-  //     shuttleAvailable: true,
-  //     shuttleFare: "₦50",
-  //     description: "Take a shuttle from Moremi gate to the Science/Tech park."
-  //   },
-  //   {
-  //     id: "r3",
-  //     fromId: "sub",
-  //     toId: "amphi",
-  //     distance: "300m",
-  //     timeWalking: "4 mins",
-  //     shuttleAvailable: false,
-  //     description: "A short walk past the SUB towards Oduduwa Hall."
-  //   }
-  // ],
-
-  routes: [],
+  routes: [
+    {
+      id: "r1",
+      fromId: "new_senate_building",
+      toId: "sub",
+      distance: "600m",
+      timeWalking: "8 mins",
+      shuttleAvailable: true,
+      shuttleFare: "₦100",
+      description: "Walk down Road 1, past the Motion Ground turnoff. The SUB is on your right."
+    },
+    {
+      id: "r2",
+      fromId: "moremi",
+      toId: "spider_building",
+      distance: "1.2km",
+      timeWalking: "15 mins",
+      shuttleAvailable: true,
+      shuttleFare: "₦100",
+      description: "Take a shuttle from Moremi gate to the Science/Tech park."
+    },
+    {
+      id: "r3",
+      fromId: "sub",
+      toId: "amphi",
+      distance: "300m",
+      timeWalking: "4 mins",
+      shuttleAvailable: false,
+      description: "A short walk past the SUB towards Oduduwa Hall."
+    },
+    {
+      id: "r4",
+      fromId: "mozambique_hall_obafemi_awolowo_university",
+      toId: "hezekiah_library",
+      distance: "850m",
+      timeWalking: "10 mins",
+      shuttleAvailable: true,
+      shuttleFare: "₦100",
+      description: "Walk south from Mozambique Hall down Road 1 past Moremi Hall. Turn left onto the library road. The library is straight ahead."
+    },
+    {
+      id: "r5",
+      fromId: "moremi",
+      toId: "faculty_of_science",
+      distance: "700m",
+      timeWalking: "9 mins",
+      shuttleAvailable: false,
+      description: "Walk from Moremi gate towards the Sports Complex, cross the main walkway, and continue past Motion Ground to the Faculty of Science buildings."
+    },
+    {
+      id: "r6",
+      fromId: "campus_gate_bus_stop",
+      toId: "sub",
+      distance: "2.4km",
+      timeWalking: "30 mins",
+      shuttleAvailable: true,
+      shuttleFare: "₦100",
+      description: "Take a campus shuttle (korope) from the main gate. The shuttle will take you down Road 1 and drop you off at SUB bus stop."
+    },
+    {
+      id: "r7",
+      fromId: "awolowo",
+      toId: "hezekiah_library",
+      distance: "650m",
+      timeWalking: "8 mins",
+      shuttleAvailable: false,
+      description: "Walk out of Awo Hall gate, head east down the path towards Oduduwa Hall, walk past Amphi Theatre, and cross to the library."
+    },
+    {
+      id: "r8",
+      fromId: "angola_hall_obafemi_awolowo_university",
+      toId: "pharmacy",
+      distance: "1.4km",
+      timeWalking: "18 mins",
+      shuttleAvailable: true,
+      shuttleFare: "₦100",
+      description: "Walk towards Awolowo Hall road, take a campus shuttle (korope) towards Pharmacy block or walk down Road 1 and turn left at Health Centre."
+    },
+    {
+      id: "r9",
+      fromId: "adekunle_fajuyi_hall_obafemi_awolowo_university",
+      toId: "spider_building",
+      distance: "1.1km",
+      timeWalking: "14 mins",
+      shuttleAvailable: true,
+      shuttleFare: "₦100",
+      description: "Walk towards SUB bus stop and take a shuttle heading to the Faculty of Technology/Spider building."
+    },
+    {
+      id: "r10",
+      fromId: "bus_stop_2",
+      toId: "obafemi_awolowo_university_health_centre",
+      distance: "500m",
+      timeWalking: "6 mins",
+      shuttleAvailable: false,
+      description: "Walk east from Bus Stop 2, cross the road towards the Faculty of Pharmacy, and continue down the street to the Health Centre on your left."
+    }
+  ],
   generalInfo: [
     "Campus Shuttles (Korope) charge ₦50-₦100 per trip.",
     "The Health Center is located on Road 1, near the Staff Quarters.",

@@ -712,6 +712,31 @@ const App: React.FC = () => {
                     <p className="text-gray-400 text-xs animate-pulse">Thinking...</p>
                   </div>
                 )}
+                {messages.length === 1 && (
+                  <div className="mt-4 mb-2 flex flex-col gap-2">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Try asking:</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => processUserRequest("How do I get from the Main Gate to the Library?")}
+                        className="px-4 py-2 bg-blue-50/50 hover:bg-blue-50 border border-blue-100/70 text-xs font-medium text-blue-600 rounded-xl transition-all shadow-sm"
+                      >
+                        🧭 How to get from Main Gate to Library?
+                      </button>
+                      <button
+                        onClick={() => processUserRequest("Where is Moremi Hall?")}
+                        className="px-4 py-2 bg-blue-50/50 hover:bg-blue-50 border border-blue-100/70 text-xs font-medium text-blue-600 rounded-xl transition-all shadow-sm"
+                      >
+                        📍 Where is Moremi Hall?
+                      </button>
+                      <button
+                        onClick={() => processUserRequest("Tell me about the Spider Building")}
+                        className="px-4 py-2 bg-blue-50/50 hover:bg-blue-50 border border-blue-100/70 text-xs font-medium text-blue-600 rounded-xl transition-all shadow-sm"
+                      >
+                        🏗️ Tell me about the Spider Building
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
             </div>
