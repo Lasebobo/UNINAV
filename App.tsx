@@ -66,7 +66,15 @@ const App: React.FC = () => {
 
   const [startInput, setStartInput] = useState('');
 
-  const [locations, setLocations] = useState<CampusLocation[]>(CAMPUS_DATA.locations);
+  const [locations, setLocations] = useState<CampusLocation[]>(() => {
+    const savedPrivate = localStorage.getItem('uninav_private_locations');
+    const privateLocs: CampusLocation[] = savedPrivate ? JSON.parse(savedPrivate) : [];
+    
+    const allLocsMap: Record<string, CampusLocation> = {};
+    CAMPUS_DATA.locations.forEach(l => { allLocsMap[l.id] = l; });
+    privateLocs.forEach(l => { allLocsMap[l.id] = l; });
+    return Object.values(allLocsMap);
+  });
 
   const [isLoading, setIsLoading] = useState(false);
   const [voiceMode, setVoiceMode] = useState(true);
@@ -155,9 +163,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     async function fetchLocations() {
-      const savedPrivate = localStorage.getItem('uninav_private_locations');
-      const privateLocs: CampusLocation[] = savedPrivate ? JSON.parse(savedPrivate) : [];
-
       try {
         const { data } = await supabase.from('Location').select('*');
         if (data && data.length > 0) {
@@ -174,22 +179,16 @@ const App: React.FC = () => {
             verified: l.verified ?? true
           }));
 
+          const savedPrivate = localStorage.getItem('uninav_private_locations');
+          const privateLocs: CampusLocation[] = savedPrivate ? JSON.parse(savedPrivate) : [];
+
           const allLocsMap: Record<string, CampusLocation> = {};
           dbLocs.forEach(l => { allLocsMap[l.id] = l; });
-          privateLocs.forEach(l => { allLocsMap[l.id] = l; });
-          setLocations(Object.values(allLocsMap));
-        } else {
-          const allLocsMap: Record<string, CampusLocation> = {};
-          CAMPUS_DATA.locations.forEach(l => { allLocsMap[l.id] = l; });
           privateLocs.forEach(l => { allLocsMap[l.id] = l; });
           setLocations(Object.values(allLocsMap));
         }
       } catch (err) {
         console.error("Failed to fetch public locations:", err);
-        const allLocsMap: Record<string, CampusLocation> = {};
-        CAMPUS_DATA.locations.forEach(l => { allLocsMap[l.id] = l; });
-        privateLocs.forEach(l => { allLocsMap[l.id] = l; });
-        setLocations(Object.values(allLocsMap));
       }
     }
     fetchLocations();
