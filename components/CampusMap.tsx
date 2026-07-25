@@ -111,6 +111,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
   const [addLocType, setAddLocType] = useState('custom');
   const [isSubmittingAdd, setIsSubmittingAdd] = useState(false);
   const [addLocError, setAddLocError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const routeFetchId = useRef(0);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [tooltipDirections, setTooltipDirections] = useState<Record<string, 'top' | 'bottom'>>({})
@@ -596,11 +597,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                 </button>
                 {activeDestination.id.startsWith('private_') && onDeleteLocation && (
                   <button
-                    onClick={() => {
-                      if (confirm(`Are you sure you want to delete "${activeDestination.name}"?`)) {
-                        onDeleteLocation(activeDestination.id);
-                      }
-                    }}
+                    onClick={() => setShowDeleteConfirm(activeDestination.id)}
                     className="flex-1 flex items-center justify-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-[12px] font-semibold py-2.5 px-3 rounded-lg border border-red-200 transition-colors"
                     title="Delete custom location"
                   >
@@ -823,6 +820,44 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Location Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full border border-gray-100 flex flex-col animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center gap-3 mb-3 text-red-600">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                <Trash2 size={20} />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Delete Landmark?</h3>
+            </div>
+            <p className="text-xs text-gray-500 mb-6 leading-relaxed">
+              Are you sure you want to delete this custom landmark? This action is permanent and cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3 border-t border-gray-100 pt-4 mt-1">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(null)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onDeleteLocation) {
+                    onDeleteLocation(showDeleteConfirm);
+                  }
+                  setShowDeleteConfirm(null);
+                }}
+                className="px-5 py-2.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-sm transition-all"
+              >
+                Delete Landmark
+              </button>
+            </div>
           </div>
         </div>
       )}
