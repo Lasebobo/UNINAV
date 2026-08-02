@@ -546,7 +546,7 @@ const RAW_CAMPUS_DATA = {
     }
   ],
   generalInfo: [
-    "Campus Shuttles (Korope) charge ₦50-₦100 per trip.",
+    "Transport Logistics Data:\nfrom campus gate to Bus stop 1 & 2\n- School shuttle Buses is 1 ticket\n- town buses is #150\n- keke is 2 tickets\nfrom campus gate to anywhere(limited to New market, Halls of residence, road 7, ICT, Pharmacy, Religious ground) on capus rather than the bus stops \n- School shuttle Buses is 2 tickets\n- keke is 3 tickets",
     "The Health Center is located on Road 1, near the Staff Quarters.",
     "Night reading at the Library ends at 10 PM, but 24/7 reading rooms are available in faculties.",
     "OAU is known as 'Africa's Most Beautiful Campus'.",

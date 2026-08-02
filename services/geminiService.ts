@@ -8,6 +8,7 @@ interface GeminiRequestOptions {
   modelType: 'fast' | 'balanced' | 'thinking' | 'maps' | 'search';
   systemInstruction?: string;
   location?: { lat: number; lng: number }; 
+  signal?: AbortSignal;
 }
 
 export const generateGeminiResponse = async (
@@ -21,6 +22,7 @@ export const generateGeminiResponse = async (
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ prompt, options }),
+      signal: options.signal,
     });
 
     if (!response.ok) {

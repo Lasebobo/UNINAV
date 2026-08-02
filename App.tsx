@@ -65,6 +65,24 @@ const App: React.FC = () => {
   });
 
   const [startInput, setStartInput] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setIsLoading(false);
+    }
+  };
+
+  const handleEdit = (msgId: string) => {
+    const msgIndex = messages.findIndex(m => m.id === msgId);
+    if (msgIndex !== -1) {
+      const msg = messages[msgIndex];
+      setInputValue(msg.content);
+      setMessages(prev => prev.slice(0, msgIndex));
+    }
+  };
 
   const [locations, setLocations] = useState<CampusLocation[]>(() => {
     const savedPrivate = localStorage.getItem('uninav_private_locations');
@@ -256,6 +274,8 @@ const App: React.FC = () => {
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
+    abortControllerRef.current = new AbortController();
+
     // Detect direction intent locally so we can present loading UI immediately
     const intent = detectLocationIntent(text);
 
@@ -306,7 +326,8 @@ const App: React.FC = () => {
             }
             return updated;
           }));
-        }
+        },
+        abortControllerRef.current?.signal
       );
 
       if (suggestedLocationId) {
@@ -705,6 +726,7 @@ const App: React.FC = () => {
                       }
                       setActiveTab('map');
                     }}
+                    onEdit={handleEdit}
                   />
                 ))}
                 {isLoading && (
@@ -742,7 +764,10 @@ const App: React.FC = () => {
             </div>
             <div className="shrink-0">
               <InputArea
+                value={inputValue}
+                onChange={setInputValue}
                 onSend={processUserRequest}
+                onStop={handleStop}
                 onStartLive={() => setIsLiveOpen(true)}
                 isLoading={isLoading}
                 voiceMode={true}

@@ -21,6 +21,9 @@ export interface RouteStep {
   duration: string;      // e.g. "2 mins"
   maneuver: string;      // e.g. "turn-left" | "" for straight
   target?: LatLng;       // The end coordinate of this step, used for location-based auto-advance
+  endLocation?: LatLng;
+  distanceMeters?: number;
+  durationSeconds?: number;
 }
 
 export interface RouteResult {
@@ -211,7 +214,10 @@ async function fetchOsrmRoute(
           if (modifier) return `${type}-${modifier}`.toLowerCase();
           return type.toLowerCase();
         })(),
-        target
+        target,
+        endLocation: target,
+        distanceMeters: stepDistance,
+        durationSeconds: calculatedDuration
       };
     });
 
@@ -263,6 +269,10 @@ export async function fetchGoogleRoute(
       distance:    s.distance ?? '',
       duration:    s.duration ?? '',
       maneuver:    (s.maneuver ?? '').toString().replace(/\s+/g, '-').toLowerCase(),
+      target: s.end_location ? { lat: s.end_location.lat, lng: s.end_location.lng } : undefined,
+      endLocation: s.end_location ? { lat: s.end_location.lat, lng: s.end_location.lng } : undefined,
+      distanceMeters: s.distanceMeters ?? 0,
+      durationSeconds: s.durationSeconds ?? 0,
     }));
 
     return {

@@ -3,6 +3,7 @@ import { SearchResult, CampusLocation, Message, DirectionsPayload } from '../typ
 import { generateGeminiResponse, GeminiResponse } from './geminiService';
 import { fetchBothRoutes } from './routeService';
 import { getRoutingOrigin, getUserLocationState, haversineDistanceMeters, isUserOnCampus, OAU_MAIN_GATE } from '../utils/locationUtils';
+import { CAMPUS_DATA } from '../data/campusData';
 
 const retrieveDocuments = async (query: string, allLocations: CampusLocation[] = []): Promise<SearchResult[]> => {
   const queryTokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
@@ -28,12 +29,16 @@ const retrieveDocuments = async (query: string, allLocations: CampusLocation[] =
     if (score > 0) results.push({ content, score, source: 'Route DB' });
   });
 
-  const { data: dbInfo } = await supabase.from('GeneralInfo').select('*');
-  (dbInfo || []).forEach(info => {
+  const { data: dbInfo, error: dbInfoError } = await supabase.from('GeneralInfo').select('*');
+  const infoData = (dbInfo && dbInfo.length > 0) 
+    ? dbInfo.map(info => info.content) 
+    : CAMPUS_DATA.generalInfo;
+
+  infoData.forEach(infoContent => {
     let score = 0;
-    const infoLower = info.content.toLowerCase();
+    const infoLower = infoContent.toLowerCase();
     queryTokens.forEach(token => { if (infoLower.includes(token)) score += 1; });
-    if (score > 0) results.push({ content: info.content, score, source: 'General Info' });
+    if (score > 0) results.push({ content: infoContent, score, source: 'General Info' });
   });
 
   return results.sort((a, b) => b.score - a.score).slice(0, 3);
@@ -229,7 +234,8 @@ export const processQuery = async (
   history: Message[] = [],
   customLocations: CampusLocation[] = [],
   userLocation?: { lat: number, lng: number },
-  onProgress?: (info: { phase: 'osrm' | 'google' | 'done' | 'failed'; attempt?: number }) => void
+  onProgress?: (info: { phase: 'osrm' | 'google' | 'done' | 'failed'; attempt?: number }) => void,
+  abortSignal?: AbortSignal
 ): Promise<{ answer: string; context: string[]; groundingMetadata?: any; suggestedLocationId?: string; directionsPayload?: DirectionsPayload; isDescriptionMode?: boolean; suppressGenericOauImage?: boolean }> => {
   
   const lowerQuery = userQuery.toLowerCase();
@@ -507,7 +513,8 @@ Question: ${userQuery}`;
 
     const response = await generateGeminiResponse(formatHistory(prompt), {
       modelType: 'balanced',
-      systemInstruction: modeASystemInstruction
+      systemInstruction: modeASystemInstruction,
+      signal: abortSignal
     });
 
     if (response.isError) return generateFallbackResponse(userQuery, allLocations);
@@ -587,7 +594,7 @@ Question: ${userQuery}`;
       // Show a brief intro — the actual numbered steps are rendered by the UI component
       const route = directionsPayload.osrmRoute ?? directionsPayload.googleRoute!;
       const originName = customOriginLoc?.name ?? 'your location';
-      answerText = `Here are walking directions from **${originName}** to **${locationName}** (${route.totalDistance} · ${route.totalDuration}).\n\n📌 **Campus Transport Pricing:**\n• **Kek (Tricycle):** 2 tickets\n• **Shuttle:** 1 ticket within campus (or 2 tickets from the campus gate to anywhere on campus, except to the SUB bus stop and Bus Stop 2).`;
+      answerText = `Here are walking directions from **${originName}** to **${locationName}** (${route.totalDistance} · ${route.totalDuration}).\n\n📌 **Campus Transport Pricing:**\nfrom campus gate to Bus stop 1 & 2\n- School shuttle Buses is 1 ticket\n- town buses is #150\n- keke is 2 tickets\nfrom campus gate to anywhere(limited to New market, Halls of residence, road 7, ICT, Pharmacy, Religious ground) on capus rather than the bus stops \n- School shuttle Buses is 2 tickets\n- keke is 3 tickets`;
     }
 
     return {
@@ -670,7 +677,8 @@ Question: ${userQuery}`;
   if (lowerQuery.match(/\b(news|latest|event|happened|search|google)\b/)) {
     const response = await generateGeminiResponse(formatHistory(userQuery), {
       modelType: 'search',
-      systemInstruction: "You are a smart assistant. Use Google Search to find the latest information."
+      systemInstruction: "You are a smart assistant. Use Google Search to find the latest information.",
+      signal: abortSignal
     });
 
     if (response.isError) return generateFallbackResponse(userQuery, allLocations);
@@ -693,7 +701,8 @@ Question: ${userQuery}`;
      
      const response = await generateGeminiResponse(formatHistory(prompt), {
        modelType: 'thinking',
-       systemInstruction: "You are an expert campus planner. Think deeply to provide a comprehensive answer. Use the provided context to answer if possible. If the context does not contain the answer, use your built-in knowledge or Google Search to find the information. Do not say 'the provided context does not include information'. NEVER output raw latitude/longitude coordinates; always use descriptive landmarks."
+       systemInstruction: "You are an expert campus planner. Think deeply to provide a comprehensive answer. Use the provided context to answer if possible. If the context does not contain the answer, use your built-in knowledge or Google Search to find the information. Do not say 'the provided context does not include information'. NEVER output raw latitude/longitude coordinates; always use descriptive landmarks.",
+       signal: abortSignal
      });
 
      if (response.isError) return generateFallbackResponse(userQuery, allLocations);
@@ -734,7 +743,8 @@ Question: ${userQuery}`;
 
   const response = await generateGeminiResponse(formatHistory(prompt), {
     modelType,
-    systemInstruction
+    systemInstruction,
+    signal: abortSignal
   });
 
   if (response.isError) return generateFallbackResponse(userQuery, allLocations);

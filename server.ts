@@ -16,9 +16,11 @@ if (!apiKey) {
 
 const groq = apiKey ? new Groq({ apiKey }) : null;
 
+import directionsRoute from './routes/directionsRoute';
+
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = parseInt(process.env.PORT || "4000", 10);
 
   app.use(express.json());
 
@@ -26,6 +28,9 @@ async function startServer() {
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", apiKeyPresent: !!apiKey });
   });
+
+  // Mount turn-by-turn directions route
+  app.use('/', directionsRoute);
 
   app.get('/api/route', async (req, res) => {
     const { originLat, originLng, destLat, destLng } = req.query;
@@ -60,10 +65,13 @@ async function startServer() {
       res.json({
         polyline:      route.overview_polyline.points,
         steps:         flatSteps.map((step: any) => ({
-          instruction: step.html_instructions,          // HTML — stripped client-side
+          instruction: step.html_instructions,          
           distance:    step.distance?.text  ?? '',
+          distanceMeters: step.distance?.value ?? 0,
           duration:    step.duration?.text  ?? '',
-          maneuver:    step.maneuver        ?? '',      // e.g. "turn-left"
+          durationSeconds: step.duration?.value ?? 0,
+          maneuver:    step.maneuver        ?? '',
+          end_location: step.end_location,
         })),
         totalDistance: leg.distance?.text  ?? '',
         totalDuration: leg.duration?.text  ?? '',

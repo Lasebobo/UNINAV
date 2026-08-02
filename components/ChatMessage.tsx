@@ -3,8 +3,8 @@ import { Message, CampusLocation } from '../types';
 import ReactMarkdown from 'react-markdown';
 import { CAMPUS_DATA } from '../data/campusData';
 import { ImageModal } from './ImageModal';
-import { Map, Navigation, ArrowRight, RefreshCw, AlertCircle, Play, Square } from 'lucide-react';
-import { useNavigation } from '../hooks/useNavigation';
+import { Map, Navigation, ArrowRight, RefreshCw, AlertCircle, Play, Square, Copy, Check, Edit2 } from 'lucide-react';
+import { useTurnByTurnNavigation } from '../hooks/useTurnByTurnNavigation';
 
 interface ChatMessageProps {
   message: Message;
@@ -13,7 +13,10 @@ interface ChatMessageProps {
   /** Called when user taps "Get Directions" on a Mode A description message */
   onGetDirections?: (locationName: string) => void;
   /** Optional retry handler for failed directions */
+  /** Optional retry handler for failed directions */
   onRetryDirections?: (locationName: string) => void;
+  /** Optional handler to edit a user message */
+  onEdit?: (messageId: string) => void;
 }
 
 // Maneuver icon mapping for step arrows
@@ -88,7 +91,7 @@ const DirectionsPanel: React.FC<{
     fallbackMode,
     startNavigation,
     stopNavigation,
-  } = useNavigation(activeRoute.steps);
+  } = useTurnByTurnNavigation(activeRoute.steps);
 
   return (
     <div className="mt-3 rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
@@ -236,10 +239,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   locations = [],
   onViewMap,
   onGetDirections,
+  onRetryDirections,
+  onEdit
 }) => {
-  const [isImageOpen, setIsImageOpen] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
   const isBot = message.role === 'bot';
+  const [isCopied, setIsCopied] = useState(false);
+  const [isCopiedText, setIsCopiedText] = useState(false);
+  const [isImageOpen, setIsImageOpen] = useState(false);
   const formattedTime = new Date(message.timestamp).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
@@ -286,7 +292,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         <img src="/logo.png" alt="Bot Avatar" className="w-8 h-8 rounded-full shadow-sm shrink-0 mt-1" />
       )}
 
-      <div className={`max-w-[80%] flex flex-col ${isBot ? 'items-start' : 'items-end'}`}>
+      <div className={`max-w-[80%] flex flex-col ${isBot ? 'items-start' : 'items-end'} group`}>
 
         {/* Message Bubble */}
         <div
@@ -393,16 +399,50 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           )}
         </div>
 
-        {/* Timestamp */}
-        <div className="mt-1 text-[11px] text-gray-400 font-medium px-1 flex items-center justify-between w-full">
+        {/* Timestamp and Actions */}
+        <div className={`mt-1 text-[11px] text-gray-400 font-medium px-1 flex items-center ${isBot ? 'justify-between' : 'justify-end gap-3'} w-full`}>
           <span>{formattedTime}</span>
+          {!isBot && (
+            <div className="flex items-center gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(message.content);
+                  setIsCopiedText(true);
+                  setTimeout(() => setIsCopiedText(false), 2000);
+                }}
+                className="hover:text-gray-600 text-gray-400 transition-colors flex items-center"
+                title="Copy Message"
+              >
+                {isCopiedText ? <Check size={13} className="text-green-600" /> : <Copy size={13} />}
+              </button>
+              {onEdit && (
+                <button onClick={() => onEdit(message.id)} className="hover:text-blue-500 text-gray-400 transition-colors flex items-center" title="Edit Message">
+                  <Edit2 size={13} />
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ---- Action buttons row ---- */}
         <div className="flex flex-wrap gap-2 mt-1.5">
+          {/* Copy Message button */}
+          {isBot && (
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(message.content);
+                setIsCopiedText(true);
+                setTimeout(() => setIsCopiedText(false), 2000);
+              }}
+              className="flex items-center justify-center p-1.5 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow active:scale-95 md:opacity-0 md:group-hover:opacity-100"
+              title="Copy Message"
+            >
+              {isCopiedText ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          )}
 
           {/* Get Directions button */}
-          {isBot && !isDirectionsMode && suggestedLocName && onGetDirections && (
+          {isBot && message.isDescriptionMode && suggestedLocName && onGetDirections && (
             <button
               id={`get-directions-${message.id}`}
               onClick={() => onGetDirections(suggestedLocName)}
@@ -414,7 +454,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           )}
 
           {/* View on Map — only show when the assistant actually suggested a specific location */}
-          {isBot && !isDirectionsMode && suggestedLocName && onViewMap && (
+          {isBot && message.isDescriptionMode && suggestedLocName && onViewMap && (
             <button
               id={`view-map-${message.id}`}
               onClick={onViewMap}
