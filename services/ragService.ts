@@ -6,7 +6,11 @@ import { getRoutingOrigin, getUserLocationState, haversineDistanceMeters, isUser
 import { CAMPUS_DATA } from '../data/campusData';
 
 const retrieveDocuments = async (query: string, allLocations: CampusLocation[] = []): Promise<SearchResult[]> => {
-  const queryTokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+  const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'in', 'where', 'how', 'what', 'can', 'you', 'i', 'a', 'an', 'of', 'and', 'to', 'for', 'with', 'are', 'am', 'do', 'does', 'it']);
+  const queryTokens = query.toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .split(/\s+/)
+    .filter(t => t.length > 2 && !stopWords.has(t));
   const results: SearchResult[] = [];
 
   allLocations.forEach(loc => {

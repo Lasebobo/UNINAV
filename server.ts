@@ -122,18 +122,18 @@ async function startServer() {
       try {
         const { prompt, options } = req.body;
         
-        let baseModel = 'llama-3.3-70b-versatile'; 
+        let baseModel = 'openai/gpt-oss-120b'; 
 
         switch (options.modelType) {
           case 'fast':
-            baseModel = 'llama-3.1-8b-instant';
+            baseModel = 'openai/gpt-oss-20b';
             break;
           case 'thinking':
           case 'maps':
           case 'search':
           case 'balanced':
           default:
-            baseModel = 'llama-3.3-70b-versatile'; 
+            baseModel = 'openai/gpt-oss-120b'; 
             break;
         }
 
@@ -143,14 +143,14 @@ async function startServer() {
         if (attempt > 0) {
           if (attempt === 1) {
             // First retry: Try a slightly older or Lite version
-            if (baseModel === 'llama-3.3-70b-versatile') model = 'llama-3.1-8b-instant';
-            else if (baseModel === 'llama-3.1-8b-instant') model = 'mixtral-8x7b-32768';
+            if (baseModel === 'openai/gpt-oss-120b') model = 'openai/gpt-oss-20b';
+            else if (baseModel === 'openai/gpt-oss-20b') model = 'groq/compound-mini';
           } else if (attempt === 2) {
             // Second retry: Try the lightest model
-            model = 'mixtral-8x7b-32768';
+            model = 'groq/compound-mini';
           } else {
             // Final retry: Safest lite model
-            model = 'mixtral-8x7b-32768';
+            model = 'groq/compound-mini';
           }
         }
         
