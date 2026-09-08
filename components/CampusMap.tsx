@@ -272,7 +272,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
             >
               {/* CartoDB Positron — clean light-mode map like the reference image */}
               <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                url="https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png?key=cb1_3056_1_842b68303eae4cdf8d9ed3d2"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
               />
 

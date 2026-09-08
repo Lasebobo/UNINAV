@@ -598,7 +598,18 @@ Question: ${userQuery}`;
       // Show a brief intro — the actual numbered steps are rendered by the UI component
       const route = directionsPayload.osrmRoute ?? directionsPayload.googleRoute!;
       const originName = customOriginLoc?.name ?? 'your location';
-      answerText = `Here are walking directions from **${originName}** to **${locationName}** (${route.totalDistance} · ${route.totalDuration}).\n\n📌 **Campus Transport Pricing:**\nfrom campus gate to Bus stop 1 & 2\n- School shuttle Buses is 1 ticket\n- town buses is #150\n- keke is 2 tickets\nfrom campus gate to anywhere(limited to New market, Halls of residence, road 7, ICT, Pharmacy, Religious ground) on capus rather than the bus stops \n- School shuttle Buses is 2 tickets\n- keke is 3 tickets`;
+      answerText = `Here are walking directions from **${originName}** to **${locationName}** (${route.totalDistance} · ${route.totalDuration}).
+
+📌 **Campus Transport Pricing:**
+
+*From campus gate to Bus stops 1 & 2:*
+- School shuttle Buses is 1 ticket
+- town buses is #150
+- keke is 2 tickets.
+
+*From campus gate to anywhere (limited to New market, Halls of residence, road 7, ICT, Pharmacy, Religious ground) on campus rather than the bus stops:*
+- School shuttle Buses is 2 tickets
+- keke is 3 tickets`;
     }
 
     return {
