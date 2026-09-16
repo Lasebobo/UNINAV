@@ -24,6 +24,8 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
 
   // Connection
   const sessionRef = useRef<any>(null);
+  // Accumulate streamed bot transcript across message chunks
+  const botTranscriptBufferRef = useRef<string>('');
 
   useEffect(() => {
     if (!visible) return;
@@ -95,7 +97,16 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
               processor.connect(inputCtx.destination);
             },
             onmessage: async (msg: LiveServerMessage) => {
-              // Handle Audio Output
+              const anyMsg = msg as any;
+
+              // ── User speech transcript ───────────────────────────────
+              const userTranscript: string | undefined =
+                anyMsg.serverContent?.inputTranscript?.text;
+              if (userTranscript?.trim()) {
+                onTranscript('user', userTranscript.trim());
+              }
+
+              // ── Bot audio output ─────────────────────────────────────
               const audioData = msg.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
               if (audioData) {
                 const ctx = outputAudioContextRef.current;
@@ -124,30 +135,28 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
                 src.onended = () => sourcesRef.current.delete(src);
               }
 
-              // Handle Interruption
+              // ── Bot output transcript (streamed in text parts) ───────
+              const textParts: string[] = (msg.serverContent?.modelTurn?.parts ?? [])
+                .filter((p: any) => typeof p.text === 'string')
+                .map((p: any) => p.text as string);
+              if (textParts.length > 0) {
+                botTranscriptBufferRef.current += textParts.join('');
+              }
+
+              // When the model turn is fully complete, flush to chat
+              if (anyMsg.serverContent?.turnComplete && botTranscriptBufferRef.current.trim()) {
+                onTranscript('bot', botTranscriptBufferRef.current.trim());
+                botTranscriptBufferRef.current = '';
+              }
+
+              // ── Interruption ─────────────────────────────────────────
               if (msg.serverContent?.interrupted) {
                 sourcesRef.current.forEach(s => s.stop());
                 sourcesRef.current.clear();
                 nextStartTimeRef.current = 0;
+                // Discard any partial bot transcript on interruption
+                botTranscriptBufferRef.current = '';
               }
-
-              // Handle Transcripts
-              // The SDK types might differ slightly, checking structure based on docs
-              // We cast to any to access properties that might not be in the strict type definition yet
-              const anyMsg = msg as any;
-
-              // User Input Transcription
-              // Note: The structure might be different, checking documentation pattern
-              // If the model sends back user input transcription, it's usually in a specific field
-              // For now, we'll log it to see structure if needed, but let's try to access it
-
-              // Model Output Transcription (if available)
-              // This is usually in the modelTurn parts if modality includes TEXT, but for AUDIO only, 
-              // we rely on the audio.
-
-              // If we want text updates in the chat, we might need to enable TEXT modality too, 
-              // but the native audio model is optimized for AUDIO-only low latency.
-              // Let's stick to AUDIO for now and focus on the voice experience.
             },
             onclose: () => {
               console.log("Session closed");
@@ -160,6 +169,9 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({ visible, onClose, onTranscript
           },
           config: {
             responseModalities: [Modality.AUDIO],
+            // Enable server-side transcription of both user speech and model output
+            inputAudioTranscription: {},
+            outputAudioTranscription: {},
             speechConfig: {
               voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } }
             },

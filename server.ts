@@ -122,7 +122,7 @@ async function startServer() {
       try {
         const { prompt, options } = req.body;
         
-        let baseModel = 'openai/gpt-oss-120b'; 
+        let baseModel = 'openai/gpt-oss-120b';
 
         switch (options.modelType) {
           case 'fast':
@@ -133,7 +133,7 @@ async function startServer() {
           case 'search':
           case 'balanced':
           default:
-            baseModel = 'openai/gpt-oss-120b'; 
+            baseModel = 'openai/gpt-oss-120b';
             break;
         }
 
@@ -142,14 +142,13 @@ async function startServer() {
         // Fallback logic: If we've failed before, try a different model
         if (attempt > 0) {
           if (attempt === 1) {
-            // First retry: Try a slightly older or Lite version
+            // First retry: step down to smaller model
             if (baseModel === 'openai/gpt-oss-120b') model = 'openai/gpt-oss-20b';
-            else if (baseModel === 'openai/gpt-oss-20b') model = 'groq/compound-mini';
+            else model = 'groq/compound';
           } else if (attempt === 2) {
-            // Second retry: Try the lightest model
-            model = 'groq/compound-mini';
+            model = 'groq/compound';
           } else {
-            // Final retry: Safest lite model
+            // Final retry: lightest available
             model = 'groq/compound-mini';
           }
         }
@@ -201,15 +200,18 @@ async function startServer() {
 
         console.log("Sending messages to Groq:", JSON.stringify(messages, null, 2));
 
+        const groqT0 = Date.now();
         const response = await groq.chat.completions.create({
           model,
           messages,
           temperature: 0.7,
         });
+        const groqElapsed = Date.now() - groqT0;
 
         return res.json({
           text: response.choices[0]?.message?.content || "No response generated.",
-          modelUsed: model
+          modelUsed: model,
+          serverMs: groqElapsed,
         });
       } catch (error: any) {
         attempt++;

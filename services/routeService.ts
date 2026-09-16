@@ -233,7 +233,7 @@ async function fetchOsrmRoute(
       endAddress:    '',
     };
   } catch (err) {
-    console.error('[routeService] Failed to fetch OSRM route:', err);
+    console.error('[routeService] OSRM error:', err);
     return null;
   }
 }
