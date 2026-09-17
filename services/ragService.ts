@@ -161,18 +161,19 @@ export function detectLocationIntent(query: string): LocationIntent {
     /\bnavigate\s+to\b/,
     /\broute\s+to\b/,
     /\bget\s+directions\b/,
-    /\btake\s+me\s+to\b/,
+    /\bdirect\s+me\b/,
+    /\btake\s+me\b/,
     /\bway\s+to\s+(the\s+)?\w/,
     /\bpath\s+to\b/,
-    /\bguide\s+me\s+to\b/,
+    /\bguide\s+me\b/,
     /\bshow\s+me\s+how\s+to\s+get\b/,
     /\bshow\s+me\s+the\s+way\b/,
     /\bi\s+need\s+directions\b/,
-    /\bi\s+want\s+to\s+go\s+to\b/,
-    /\bwalk\s+to\b/,
-    /\bwalking\s+to\b/,
-    /\bhead\s+to\b/,
-    /\blead\s+me\s+to\b/,
+    /\bi\s+want\s+to\s+go\s+(to|there)\b/,
+    /\bwalk\s+(to|there)\b/,
+    /\bwalking\s+(to|there)\b/,
+    /\bhead\s+(to|there)\b/,
+    /\blead\s+me\b/,
     /\bfind\s+my\s+way\b/,
     /\bfind\s+a\s+route\b/,
     /\bget\s+me\s+to\b/,
@@ -627,7 +628,7 @@ Question: ${userQuery}`;
   // This is the final catch-all; the LLM must NEVER generate walking steps.
   // =========================================================================
   const isNavigationQuery = lowerQuery.match(
-    /\b(directions?|route|navigate|how\s+to\s+get|how\s+do\s+i\s+get|take\s+me\s+to|guide\s+me|get\s+to|walk\s+to|travel\s+to|go\s+to|reach|map\s+to)\b/
+    /\b(directions?|direct\s+me|route|navigate|how\s+to\s+get|how\s+do\s+i\s+get|take\s+me|guide\s+me|lead\s+me|get\s+(to|there)|walk\s+(to|there)|travel\s+(to|there)|go\s+(to|there)|reach|map\s+to)\b/
   );
 
   if (isNavigationQuery) {
