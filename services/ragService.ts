@@ -720,10 +720,7 @@ Question: ${userQuery}`;
      });
 
      if (response.isError) {
-       if (response.text && (response.text.includes("quota") || response.text.includes("rate limit") || response.text.includes("demand") || response.text.includes("key"))) {
-         return { answer: response.text, context: ["Error"] };
-       }
-       return generateFallbackResponse(userQuery, allLocations);
+       return { answer: response.text || "An unknown error occurred connecting to the AI.", context: ["Error"] };
      }
 
      return { 
@@ -767,10 +764,7 @@ Question: ${userQuery}`;
   });
 
   if (response.isError) {
-    if (response.text && (response.text.includes("quota") || response.text.includes("rate limit") || response.text.includes("demand") || response.text.includes("key") || response.text.includes("timeout") || response.text.includes("failed"))) {
-      return { answer: response.text, context: ["Error"] };
-    }
-    return generateFallbackResponse(userQuery, allLocations);
+    return { answer: response.text || "An unknown error occurred connecting to the AI.", context: ["Error"] };
   }
 
   return {
