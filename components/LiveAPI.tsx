@@ -201,7 +201,9 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({
               if (audioB64) {
                 // Flush buffered user transcript now that the model is responding
                 if (userBufRef.current.trim()) {
-                  onTranscriptRef.current('user', userBufRef.current.trim());
+                  if (/[\\w]/.test(userBufRef.current)) {
+                    onTranscriptRef.current('user', userBufRef.current.trim());
+                  }
                   userBufRef.current = '';
                 }
                 const ctx = outputCtxRef.current;
@@ -225,7 +227,9 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({
               const outText: string | undefined = any.serverContent?.outputTranscription?.text;
               if (outText) botBufRef.current += outText;
               if (any.serverContent?.turnComplete && botBufRef.current.trim()) {
-                onTranscriptRef.current('bot', botBufRef.current.trim());
+                if (/[\\w]/.test(botBufRef.current)) {
+                  onTranscriptRef.current('bot', botBufRef.current.trim());
+                }
                 botBufRef.current = '';
               }
 
@@ -243,7 +247,9 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({
               if (toolCall?.functionCalls?.length) {
                 // Flush user transcript — a tool call also means user's turn is done
                 if (userBufRef.current.trim()) {
-                  onTranscriptRef.current('user', userBufRef.current.trim());
+                  if (/[\\w]/.test(userBufRef.current)) {
+                    onTranscriptRef.current('user', userBufRef.current.trim());
+                  }
                   userBufRef.current = '';
                 }
 

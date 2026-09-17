@@ -324,8 +324,8 @@ export const processQuery = async (
 
     const formatted: { role: string; parts: { text: string }[] }[] = [];
 
-    // Limit to last 6 messages (3 turns) to stay within the 8k token/min budget
-    const recentHistory = history.slice(-6);
+    // Limit to last 2 messages (1 turn) to stay within the strict 8k token/min budget
+    const recentHistory = history.slice(-2);
 
     for (const msg of recentHistory) {
       const role = msg.role === 'bot' ? 'model' : 'user';
@@ -719,7 +719,12 @@ Question: ${userQuery}`;
        signal: abortSignal
      });
 
-     if (response.isError) return generateFallbackResponse(userQuery, allLocations);
+     if (response.isError) {
+       if (response.text && (response.text.includes("quota") || response.text.includes("rate limit") || response.text.includes("demand") || response.text.includes("key"))) {
+         return { answer: response.text, context: ["Error"] };
+       }
+       return generateFallbackResponse(userQuery, allLocations);
+     }
 
      return { 
          answer: response.text, 
@@ -761,7 +766,12 @@ Question: ${userQuery}`;
     signal: abortSignal
   });
 
-  if (response.isError) return generateFallbackResponse(userQuery, allLocations);
+  if (response.isError) {
+    if (response.text && (response.text.includes("quota") || response.text.includes("rate limit") || response.text.includes("demand") || response.text.includes("key") || response.text.includes("timeout") || response.text.includes("failed"))) {
+      return { answer: response.text, context: ["Error"] };
+    }
+    return generateFallbackResponse(userQuery, allLocations);
+  }
 
   return {
     answer: response.text,
