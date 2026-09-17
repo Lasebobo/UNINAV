@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Message, CampusLocation } from './types';
 import { processQuery, detectLocationIntent } from './services/ragService';
+import { RouteResult } from './services/routeService';
 import { ChatMessage } from './components/ChatMessage';
 import { InputArea } from './components/InputArea';
 import { CampusMap } from './components/CampusMap';
@@ -106,6 +107,8 @@ const App: React.FC = () => {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mapKey, setMapKey] = useState(0);
+  /** Controlled view override sent from voice commands; null = let CampusMap decide internally */
+  const [mapViewOverride, setMapViewOverride] = useState<'schematic' | 'google' | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -447,6 +450,51 @@ const App: React.FC = () => {
     setMessages(prev => [...prev, msg]);
   };
 
+  /** Called by LiveAPI when a voice-initiated route has been computed */
+  const handleLiveRouteComputed = (
+    route: { osrmRoute: RouteResult | null; googleRoute: RouteResult | null },
+    destinationName: string
+  ) => {
+    // Find the matching location object
+    const loc = locations.find(
+      l => l.name.toLowerCase() === destinationName.toLowerCase() ||
+           l.aliases?.some(a => a.toLowerCase() === destinationName.toLowerCase())
+    );
+    if (loc) setActiveDestination(loc);
+
+    // Switch to map so the route is immediately visible
+    setActiveTab('map');
+
+    // Add a directions message so the directions panel renders in chat
+    const dirMsg: Message = {
+      id: generateId(),
+      role: 'bot',
+      content: `Here are walking directions to **${destinationName}**.`,
+      timestamp: Date.now(),
+      directionsPayload: {
+        locationId: loc?.id ?? destinationName,
+        locationName: destinationName,
+        osrmRoute: route.osrmRoute,
+        googleRoute: route.googleRoute,
+      },
+      suggestedLocationId: loc?.id,
+    };
+    setMessages(prev => [...prev, dirMsg]);
+  };
+
+  /** Called by LiveAPI when the user asks to switch map view */
+  const handleLiveSwitchMapView = (view: 'campus' | 'google') => {
+    setMapViewOverride(view === 'campus' ? 'schematic' : 'google');
+    setActiveTab('map');
+  };
+
+  /** Called by LiveAPI when a location has been identified and should be focused on the map */
+  const handleLiveFocusLocation = (locationId: string) => {
+    const loc = locations.find(l => l.id === locationId);
+    if (loc) setActiveDestination(loc);
+    setActiveTab('map');
+  };
+
   const handleAddLocation = async (newLoc: {
     name: string;
     description: string;
@@ -707,6 +755,7 @@ const App: React.FC = () => {
               onOpenSidebar={() => setIsSidebarOpen(true)}
               onAddLocation={handleAddLocation}
               onDeleteLocation={handleDeleteLocation}
+              requestedViewMode={mapViewOverride ?? undefined}
             />
           </div>
         ) : (
@@ -783,6 +832,10 @@ const App: React.FC = () => {
           visible={isLiveOpen}
           onClose={() => setIsLiveOpen(false)}
           onTranscript={handleLiveTranscript}
+          userLocation={userLocation}
+          onRouteComputed={handleLiveRouteComputed}
+          onSwitchMapView={handleLiveSwitchMapView}
+          onFocusLocation={handleLiveFocusLocation}
         />
       )}
 

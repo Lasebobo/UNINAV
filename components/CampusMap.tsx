@@ -82,6 +82,8 @@ interface CampusMapProps {
   onOpenSidebar?: () => void;
   onAddLocation?: (loc: { name: string; description: string; type: string; lat: number; lng: number }) => Promise<void>;
   onDeleteLocation?: (id: string) => void;
+  /** When set by a parent (e.g. voice command), overrides the internal view toggle */
+  requestedViewMode?: 'schematic' | 'google';
 }
 
 export const CampusMap: React.FC<CampusMapProps> = ({
@@ -95,12 +97,18 @@ export const CampusMap: React.FC<CampusMapProps> = ({
   onOpenSidebar,
   onAddLocation,
   onDeleteLocation,
+  requestedViewMode,
 }) => {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const mapControllerRef = useRef<{ repositionToUser: () => void }>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'schematic' | 'google'>('schematic');
   const [routeResult, setRouteResult] = useState<RouteResult | null>(null);
+
+  // Apply an externally-requested view mode (e.g. from a voice command)
+  useEffect(() => {
+    if (requestedViewMode) setViewMode(requestedViewMode);
+  }, [requestedViewMode]);
   const [routeLoading, setRouteLoading] = useState(false);
   const [hoveredLocationId, setHoveredLocationId] = useState<string | null>(null);
 

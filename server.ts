@@ -205,6 +205,7 @@ async function startServer() {
           model,
           messages,
           temperature: 0.7,
+          max_tokens: 300,   // keeps each call well within the 8k TPM budget
         });
         const groqElapsed = Date.now() - groqT0;
 

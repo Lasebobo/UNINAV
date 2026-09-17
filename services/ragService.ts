@@ -323,8 +323,11 @@ export const processQuery = async (
     }
 
     const formatted: { role: string; parts: { text: string }[] }[] = [];
-    
-    for (const msg of history) {
+
+    // Limit to last 6 messages (3 turns) to stay within the 8k token/min budget
+    const recentHistory = history.slice(-6);
+
+    for (const msg of recentHistory) {
       const role = msg.role === 'bot' ? 'model' : 'user';
       
       // Gemini requires the first message to be from the user
