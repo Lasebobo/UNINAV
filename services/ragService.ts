@@ -532,12 +532,8 @@ Question: ${userQuery}`;
     // We only use `suggestedLocationId` that was inferred from the original user
     // query (above) so the UI will not pick a location unless the user asked for it.
 
-    const destLoc = allLocations.find(l => l.id === suggestedLocationId);
-    const locationName = destLoc ? destLoc.name : 'this location';
-    const answerWithSuggestion = response.text + `\n\n🗺️ Tap **Get Directions** below to calculate a walking route to **${locationName}**, or **View on Map** to see its location.`;
-
     return {
-      answer: answerWithSuggestion,
+      answer: response.text,
       context: contextStrings,
       suggestedLocationId: suggestedLocationId, // only from the user's original query
       isDescriptionMode: true,       // Signals the UI to show "Get Directions" button

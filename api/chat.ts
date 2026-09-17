@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Groq from 'groq-sdk';
+import { getModelForAttempt } from '../utils/modelSelection';
 
 const apiKey = process.env.GROQ_API_KEY?.trim() ?? null;
 const groq = apiKey ? new Groq({ apiKey }) : null;
@@ -16,15 +17,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const { prompt, options } = req.body;
 
-      let baseModel = 'llama-3.3-70b-versatile';
-      switch (options?.modelType) {
-        case 'fast': baseModel = 'llama-3.1-8b-instant'; break;
-        default:     baseModel = 'llama-3.3-70b-versatile';
-      }
-
-      let model = baseModel;
-      if (attempt === 1) model = baseModel === 'llama-3.3-70b-versatile' ? 'llama-3.1-8b-instant' : 'mixtral-8x7b-32768';
-      else if (attempt >= 2) model = 'mixtral-8x7b-32768';
+      const model = getModelForAttempt(options?.modelType, attempt);
       currentModel = model;
 
       const messages: any[] = [];
@@ -40,7 +33,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         messages.push({ role: 'user', content: String(prompt) });
       }
 
-      const response = await groq.chat.completions.create({ model, messages, temperature: 0.7 });
+      const response = await groq.chat.completions.create({
+        model,
+        messages,
+        temperature: 0.7,
+        max_tokens: 2000,
+      });
 
       return res.json({
         text: response.choices[0]?.message?.content ?? 'No response generated.',

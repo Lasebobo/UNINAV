@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Type } from "@google/genai";
+import { Minimize2, Maximize2, X } from 'lucide-react';
 import { CAMPUS_DATA } from '../data/campusData';
 import { fetchBothRoutes, RouteResult } from '../services/routeService';
 
@@ -83,6 +84,7 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({
 }) => {
   const [status, setStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [volume, setVolume] = useState(0);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   // Input audio
   const inputCtxRef  = useRef<AudioContext | null>(null);
@@ -97,7 +99,8 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({
 
   // Session
   const sessionRef  = useRef<any>(null);   // resolved Live session object
-  const botBufRef   = useRef('');          // accumulates streamed output transcript
+  const userBufRef  = useRef('');          // accumulates streamed input (user) transcript
+  const botBufRef   = useRef('');          // accumulates streamed output (bot) transcript
 
   // Keep userLocation current inside callbacks without re-running the effect
   const userLocRef = useRef(userLocation);
@@ -185,15 +188,22 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({
               const any = msg as any;
 
               // User speech transcript (requires inputAudioTranscription in config)
+              // Tokens arrive one-by-one while the user speaks — buffer them and
+              // flush as a single bubble only when the model starts responding.
               const userText: string | undefined = any.serverContent?.inputTranscription?.text;
-              if (userText?.trim()) {
-                onTranscriptRef.current('user', userText.trim());
+              if (userText) {
+                userBufRef.current += userText;
               }
 
-              // Bot audio playback
+              // Bot audio playback — also the signal that the user's turn is complete
               const audioB64: string | undefined =
                 msg.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
               if (audioB64) {
+                // Flush buffered user transcript now that the model is responding
+                if (userBufRef.current.trim()) {
+                  onTranscriptRef.current('user', userBufRef.current.trim());
+                  userBufRef.current = '';
+                }
                 const ctx = outputCtxRef.current;
                 if (ctx) {
                   const bytes = b64ToU8(audioB64);
@@ -219,17 +229,24 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({
                 botBufRef.current = '';
               }
 
-              // Interruption — stop queued audio, discard partial transcript
+              // Interruption — stop queued audio, discard partial transcripts
               if (msg.serverContent?.interrupted) {
                 sourcesRef.current.forEach(s => { try { s.stop(); } catch {} });
                 sourcesRef.current.clear();
                 nextStartRef.current = 0;
-                botBufRef.current = '';
+                userBufRef.current = '';   // discard words that were cut off
+                botBufRef.current  = '';
               }
 
               // ── Function calls ─────────────────────────────────────────
               const toolCall = any.toolCall;
               if (toolCall?.functionCalls?.length) {
+                // Flush user transcript — a tool call also means user's turn is done
+                if (userBufRef.current.trim()) {
+                  onTranscriptRef.current('user', userBufRef.current.trim());
+                  userBufRef.current = '';
+                }
+
                 const responses: any[] = [];
 
                 for (const fc of toolCall.functionCalls) {
@@ -415,6 +432,7 @@ STRICT RULES:
       sourcesRef.current.clear();
       try { sessionRef.current?.close?.(); } catch {}
       sessionRef.current = null;
+      userBufRef.current = '';
       botBufRef.current  = '';
     };
   }, [visible]);
@@ -423,15 +441,63 @@ STRICT RULES:
 
   if (!visible) return null;
 
+  if (isMinimized) {
+    return (
+      <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-3 bg-white shadow-xl rounded-full p-2 pr-4 border border-gray-200 animate-in slide-in-from-bottom-5">
+        <div
+          className={[
+            'w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shrink-0',
+            status === 'connected' ? 'bg-blue-600 shadow-md' : 'bg-gray-200',
+          ].join(' ')}
+          style={{ transform: status === 'connected' ? `scale(${1 + volume * 0.15})` : 'scale(1)' }}
+        >
+          {status === 'connecting' ? (
+            <div className="w-5 h-5 border-2 border-white/80 border-t-transparent rounded-full animate-spin" />
+          ) : status === 'error' ? (
+            <div className="text-red-500 font-bold">!</div>
+          ) : (
+            <div className="w-2.5 h-2.5 bg-white rounded-full" />
+          )}
+        </div>
+        
+        <div className="flex flex-col mr-2">
+          <span className="text-xs font-semibold text-gray-800">
+            {status === 'connecting' ? 'Connecting...' : status === 'connected' ? 'Listening...' : 'Error'}
+          </span>
+          <span className="text-[10px] text-gray-500">Live Voice</span>
+        </div>
+        
+        <div className="flex items-center gap-1 border-l pl-3 border-gray-100">
+          <button onClick={() => setIsMinimized(false)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Maximize">
+            <Maximize2 size={18} />
+          </button>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-red-500 transition-colors" title="Close">
+            <X size={20} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm">
-      {/* Close */}
-      <button
-        onClick={onClose}
-        className="absolute top-10 right-6 md:top-8 md:right-8 p-4 text-white/60 hover:text-white transition-colors"
-      >
-        <span className="text-2xl font-bold">✕</span>
-      </button>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      {/* Controls */}
+      <div className="absolute top-6 right-6 flex items-center gap-4">
+        <button
+          onClick={() => setIsMinimized(true)}
+          className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+          title="Minimize"
+        >
+          <Minimize2 size={24} />
+        </button>
+        <button
+          onClick={onClose}
+          className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+          title="Close"
+        >
+          <X size={24} />
+        </button>
+      </div>
 
       <div className="flex flex-col items-center gap-8 w-full max-w-md px-8">
         {/* Visualiser */}
@@ -466,6 +532,12 @@ STRICT RULES:
             </p>
           )}
         </div>
+        
+        {status === 'connected' && (
+           <p className="text-white/50 text-sm mt-4 cursor-pointer hover:text-white transition-colors" onClick={() => setIsMinimized(true)}>
+             Tap to minimize and view the map
+           </p>
+        )}
       </div>
     </div>
   );

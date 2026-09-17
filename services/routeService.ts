@@ -320,7 +320,10 @@ async function fetchGoogleProxyRoute(
         distance:    s.distance ?? '',
         duration:    s.duration ?? '',
         maneuver:    s.maneuver ?? '',
-        target
+        target,
+        endLocation: target,
+        distanceMeters: s.distanceMeters ?? 0,
+        durationSeconds: s.durationSeconds ?? 0
       };
     });
 

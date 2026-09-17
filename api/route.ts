@@ -16,13 +16,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const route = data.routes[0];
     const leg   = route.legs[0];
 
+    // Helper to flatten nested steps
+    const flattenGoogleSteps = (steps: any[]): any[] => {
+      const flat: any[] = [];
+      for (const step of steps) {
+        if (step.steps && Array.isArray(step.steps) && step.steps.length > 0) {
+          flat.push(...flattenGoogleSteps(step.steps));
+        } else {
+          flat.push(step);
+        }
+      }
+      return flat;
+    };
+
+    const flatSteps = flattenGoogleSteps(leg.steps || []);
+
     res.json({
       polyline:      route.overview_polyline.points,
-      steps:         leg.steps.map((step: any) => ({
+      steps:         flatSteps.map((step: any) => ({
         instruction: step.html_instructions,
         distance:    step.distance?.text  ?? '',
+        distanceMeters: step.distance?.value ?? 0,
         duration:    step.duration?.text  ?? '',
+        durationSeconds: step.duration?.value ?? 0,
         maneuver:    step.maneuver        ?? '',
+        end_location: step.end_location,
       })),
       totalDistance: leg.distance?.text  ?? '',
       totalDuration: leg.duration?.text  ?? '',

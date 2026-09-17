@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 dotenv.config({ override: true });
 import express from "express";
 import { createServer as createViteServer } from "vite";
-import path from "path";
+import path from 'path';
+import { getModelForAttempt } from './utils/modelSelection';
 import Groq from 'groq-sdk';
 
 const rawApiKey = process.env.GROQ_API_KEY || process.env.API_KEY;
@@ -122,36 +123,7 @@ async function startServer() {
       try {
         const { prompt, options } = req.body;
         
-        let baseModel = 'openai/gpt-oss-120b';
-
-        switch (options.modelType) {
-          case 'fast':
-            baseModel = 'openai/gpt-oss-20b';
-            break;
-          case 'thinking':
-          case 'maps':
-          case 'search':
-          case 'balanced':
-          default:
-            baseModel = 'openai/gpt-oss-120b';
-            break;
-        }
-
-        let model = baseModel;
-
-        // Fallback logic: If we've failed before, try a different model
-        if (attempt > 0) {
-          if (attempt === 1) {
-            // First retry: step down to smaller model
-            if (baseModel === 'openai/gpt-oss-120b') model = 'openai/gpt-oss-20b';
-            else model = 'groq/compound';
-          } else if (attempt === 2) {
-            model = 'groq/compound';
-          } else {
-            // Final retry: lightest available
-            model = 'groq/compound-mini';
-          }
-        }
+        const model = getModelForAttempt(options.modelType, attempt);
         
         currentModel = model;
 
@@ -205,7 +177,7 @@ async function startServer() {
           model,
           messages,
           temperature: 0.7,
-          max_tokens: 300,   // keeps each call well within the 8k TPM budget
+          max_tokens: 2000,
         });
         const groqElapsed = Date.now() - groqT0;
 
