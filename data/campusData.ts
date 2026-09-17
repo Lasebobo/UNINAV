@@ -7,6 +7,15 @@ import { KnowledgeBase } from '../types';
 const RAW_CAMPUS_DATA = {
   locations: [
     {
+      id: "oau_ict_centre",
+      name: "OAU ICT Centre",
+      aliases: ["ict", "ict centre", "intecu", "computer building"],
+      type: "facility",
+      description: "The central Information and Communication Technology facility of Obafemi Awolowo University, providing network infrastructure, computing resources, and digital services for the campus.",
+      lat: 7.5182493513836866,
+      lng: 4.529522167567513,
+    },
+    {
       id: "hezekiah_library",
       name: "Hezekiah Oluwasanmi Library",
       aliases: ["library", "hol", "main lib", "main library", "hezekiah library"],
