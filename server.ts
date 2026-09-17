@@ -3,7 +3,7 @@ dotenv.config({ override: true });
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from 'path';
-import { getModelForAttempt } from './utils/modelSelection';
+import { getModelForAttempt } from './utils/modelSelection.js';
 import Groq from 'groq-sdk';
 
 const rawApiKey = process.env.GROQ_API_KEY || process.env.API_KEY;

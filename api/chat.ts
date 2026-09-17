@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Groq from 'groq-sdk';
-import { getModelForAttempt } from '../utils/modelSelection';
+import { getModelForAttempt } from '../utils/modelSelection.js';
 
 const apiKey = process.env.GROQ_API_KEY?.trim() ?? null;
 const groq = apiKey ? new Groq({ apiKey }) : null;
