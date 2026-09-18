@@ -48,7 +48,7 @@ const App: React.FC = () => {
       {
         id: '1',
         role: 'bot',
-        content: "Welcome to OAU! I can help you find the Senate Building, Moremi Hall, or check the latest news.",
+        content: "Welcome to OAU! I can help you find the Senate Building, Moremi Garden, or check the latest news. Type or speak to start!",
         timestamp: Date.now()
       }
     ];
@@ -430,7 +430,7 @@ const App: React.FC = () => {
     setMessages([{
       id: '1',
       role: 'bot',
-      content: "Welcome to OAU! I can help you find the Senate Building, Moremi Hall, or check the latest news.",
+      content: "Welcome to OAU! I can help you find the Senate Building, Moremi Garden, or check the latest news. Type or speak to start!",
       timestamp: Date.now()
     }]);
     setHasStarted(false);
@@ -794,10 +794,10 @@ const App: React.FC = () => {
                         🧭 How to get from Main Gate to Library?
                       </button>
                       <button
-                        onClick={() => processUserRequest("Where is Moremi Hall?")}
+                        onClick={() => processUserRequest("Where is Moremi Garden?")}
                         className="px-4 py-2 bg-blue-50/50 hover:bg-blue-50 border border-blue-100/70 text-xs font-medium text-blue-600 rounded-xl transition-all shadow-sm"
                       >
-                        📍 Where is Moremi Hall?
+                        📍 Where is Moremi Garden?
                       </button>
                       <button
                         onClick={() => processUserRequest("Tell me about the Spider Building")}
