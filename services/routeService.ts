@@ -8,7 +8,8 @@
  */
 
 import { decode } from '@mapbox/polyline';
-import { isUserOnCampus } from '../utils/locationUtils';
+import { isUserOnCampus, haversineDistanceMeters } from '../utils/locationUtils';
+import { CAMPUS_DATA } from '../data/campusData';
 
 export interface LatLng {
   lat: number;
@@ -120,7 +121,7 @@ function getCompassDirection(bearing: number): string {
   return directions[index];
 }
 
-function buildOsrmInstruction(step: any): string {
+function buildOsrmInstruction(step: any, startPoint?: LatLng): string {
   const roadName = getRoadName(step.name);
   const modifier = (step.maneuver?.modifier ?? '').toLowerCase();
   const distance = formatDistance(step.distance ?? 0);
@@ -129,16 +130,14 @@ function buildOsrmInstruction(step: any): string {
   const bearing = step.maneuver?.bearing_after;
   const compassDir = typeof bearing === 'number' ? getCompassDirection(bearing) : '';
 
+  let baseInstruction = '';
+
   if (type === 'depart') {
-    const dirStr = compassDir ? ` heading ${compassDir}` : '';
-    return `Head${dirStr} on ${roadName} for ${distance}`;
-  }
-
-  if (type === 'arrive') {
-    return `Arrive at your destination on ${roadName}`;
-  }
-
-  if (type === 'turn' || type === 'ramp' || type === 'fork' || type === 'merge' || type === 'new name') {
+    const dirStr = compassDir ? ` ${compassDir}` : '';
+    baseInstruction = `Head${dirStr} on ${roadName} for ${distance}`;
+  } else if (type === 'arrive') {
+    baseInstruction = `Arrive at your destination on ${roadName}`;
+  } else if (type === 'turn' || type === 'ramp' || type === 'fork' || type === 'merge' || type === 'new name') {
     let turnAction = 'Turn';
     if (modifier === 'sharp left') turnAction = 'Turn sharp left';
     else if (modifier === 'left') turnAction = 'Turn left';
@@ -146,23 +145,45 @@ function buildOsrmInstruction(step: any): string {
     else if (modifier === 'sharp right') turnAction = 'Turn sharp right';
     else if (modifier === 'right') turnAction = 'Turn right';
     else if (modifier === 'slight right') turnAction = 'Turn slight right';
-    else if (modifier === 'straight') return `Continue straight on ${roadName} for ${distance}`;
+    else if (modifier === 'straight') baseInstruction = `Continue straight on ${roadName} for ${distance}`;
     else if (modifier === 'uturn') turnAction = 'Make a U-turn';
     
-    return `${turnAction} onto ${roadName}`;
-  }
-
-  if (type === 'continue') {
-    return `Continue straight on ${roadName} for ${distance}`;
-  }
-
-  if (type === 'roundabout' || type === 'rotary') {
+    if (!baseInstruction) baseInstruction = `${turnAction} onto ${roadName}`;
+  } else if (type === 'continue') {
+    baseInstruction = `Continue straight on ${roadName} for ${distance}`;
+  } else if (type === 'roundabout' || type === 'rotary') {
     const exit = step.maneuver?.exit;
     const exitStr = exit ? ` and take exit ${exit}` : '';
-    return `Enter the roundabout${exitStr} onto ${roadName}`;
+    baseInstruction = `Enter the roundabout${exitStr} onto ${roadName}`;
+  } else {
+    baseInstruction = `Continue straight on ${roadName} for ${distance}`;
   }
 
-  return `Continue straight on ${roadName} for ${distance}`;
+  if (type !== 'arrive' && startPoint) {
+    let closestLandmark = null;
+    let minDistance = 80; // 80 meters threshold
+
+    for (const loc of CAMPUS_DATA.locations) {
+      if (loc.lat && loc.lng) {
+        const d = haversineDistanceMeters(startPoint, { lat: loc.lat, lng: loc.lng });
+        if (d < minDistance) {
+          minDistance = d;
+          closestLandmark = loc.name;
+        }
+      }
+    }
+
+    if (closestLandmark) {
+      baseInstruction += `, near ${closestLandmark}`;
+    }
+  }
+
+  // If this was a turn instruction without distance, append the segment distance to distinguish identical turns
+  if ((type === 'turn' || type === 'ramp' || type === 'fork' || type === 'merge' || type === 'new name') && !baseInstruction.includes('Continue straight')) {
+    baseInstruction += ` and continue for ${distance}`;
+  }
+
+  return baseInstruction;
 }
 
 async function fetchOsrmRoute(
@@ -197,15 +218,17 @@ async function fetchOsrmRoute(
       const calculatedDuration = stepDistance / WALKING_SPEED_M_S;
       
       let target: LatLng | undefined = undefined;
+      let startPoint: LatLng | undefined = undefined;
       const coords = step.geometry?.coordinates;
       if (coords && coords.length > 0) {
         // OSRM coordinates are [lng, lat]
         const last = coords[coords.length - 1];
         target = { lat: last[1], lng: last[0] };
+        startPoint = { lat: coords[0][1], lng: coords[0][0] };
       }
 
       return {
-        instruction: buildOsrmInstruction(step),
+        instruction: buildOsrmInstruction(step, startPoint),
         distance:    formatDistance(stepDistance),
         duration:    formatDuration(calculatedDuration),
         maneuver:    (() => {
