@@ -528,7 +528,7 @@ STRICT RULES:
         <div className="text-center space-y-2">
           <h2 className="text-white text-2xl font-bold">Live Voice Chat</h2>
           <p className="text-gray-400">
-            {status === 'connecting' ? 'Connecting to Gemini…' :
+            {status === 'connecting' ? 'Connecting…' :
              status === 'connected'  ? 'Listening…'           :
              status === 'error'      ? 'Connection Failed'    : 'Ready'}
           </p>

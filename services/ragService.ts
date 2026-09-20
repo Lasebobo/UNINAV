@@ -291,7 +291,9 @@ export const processQuery = async (
     }
     
     // 3. Fall back to the most recent suggested location from the chat history context
-    if (!locId && history && history.length > 0) {
+    // BUT only if the query doesn't explicitly name an unknown place they want to go to.
+    const hasExplicitUnknownDestination = /\b(?:to|for|directions to)\s+(?!there\b|it\b|me\b|us\b)([\w\s]+)/i.test(userQuery);
+    if (!locId && history && history.length > 0 && !hasExplicitUnknownDestination) {
       for (let i = history.length - 1; i >= 0; i--) {
         const msg = history[i];
         if (msg.suggestedLocationId) {
@@ -557,6 +559,15 @@ Question: ${userQuery}`;
     const resolvedDestLoc = resolvedDestId 
       ? allLocations.find(l => l.id === resolvedDestId) 
       : destLoc;
+
+    if (!resolvedDestLoc) {
+      const match = userQuery.match(/\b(?:to|directions to|navigate to|where is|route to)\s+(?!there\b|it\b)(.+)/i);
+      const requestedPlace = match ? match[1].trim().replace(/\?$/, '') : "that location";
+      return {
+        answer: `I couldn't find "${requestedPlace}" in the campus database. Please check the spelling or ask for a known campus landmark.`,
+        context: ['Routing engine failed: Unknown destination'],
+      };
+    }
 
     // Use custom origin location coords if user said "from X"
     // Otherwise fall back to user's GPS location
