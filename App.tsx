@@ -358,10 +358,8 @@ const App: React.FC = () => {
         suppressGenericOauImage,
       };
 
-      // If this was a directions request and both engines failed, mark as error and provide fallback content
-      if (intent === 'directions' && (!directionsPayload || (!directionsPayload.osrmRoute && !directionsPayload.googleRoute))) {
-        const locName = suggestedLocationId ? (locations.find(l => l.id === suggestedLocationId)?.name ?? 'your destination') : 'your destination';
-        botMsg.content = `I couldn't load directions right now. Tap **View on Map** to navigate to **${locName}**.`;
+      // If this was a directions request, the location is known, and both engines failed, mark as a network error
+      if (intent === 'directions' && suggestedLocationId && (!directionsPayload || (!directionsPayload.osrmRoute && !directionsPayload.googleRoute))) {
         botMsg.directionsStatus = 'error';
       }
 
@@ -374,8 +372,8 @@ const App: React.FC = () => {
         if (firstStep) speakResponse(firstStep);
       }
 
-      // If final failure (no routes), speak concise failure message
-      if ((!directionsPayload || (!directionsPayload.osrmRoute && !directionsPayload.googleRoute)) && intent === 'directions' && voiceMode) {
+      // If final failure (no routes) for a known location, speak concise failure message
+      if (suggestedLocationId && (!directionsPayload || (!directionsPayload.osrmRoute && !directionsPayload.googleRoute)) && intent === 'directions' && voiceMode) {
         speakResponse("I couldn't load directions due to a network issue. Please check your connection and try again.");
       }
 

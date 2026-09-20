@@ -56,6 +56,16 @@ const RAW_CAMPUS_DATA = {
       imageUrl: "images/sub.jpg"
     },
     {
+      id: "moremi",
+      name: "Moremi Hall",
+      aliases: ["moremi"],
+      type: "residential",
+      description: "A popular female hall of residence, known for its vibrant atmosphere and proximity to the academic area.",
+      lat: 7.5140,
+      lng: 4.5190,
+      imageUrl: "images/moremi.jpg"
+    },
+    {
       id: "awolowo",
       name: "Awolowo Hall",
       aliases: ["awo", "awo hall"],
@@ -458,6 +468,16 @@ const RAW_CAMPUS_DATA = {
       description: "Walk down Road 1, past the Motion Ground turnoff. The SUB is on your right."
     },
     {
+      id: "r2",
+      fromId: "moremi",
+      toId: "spider_building",
+      distance: "1.2km",
+      timeWalking: "15 mins",
+      shuttleAvailable: true,
+      shuttleFare: "₦100",
+      description: "Take a shuttle from Moremi gate to the Science/Tech park."
+    },
+    {
       id: "r3",
       fromId: "sub",
       toId: "amphi",
@@ -474,7 +494,16 @@ const RAW_CAMPUS_DATA = {
       timeWalking: "10 mins",
       shuttleAvailable: true,
       shuttleFare: "₦100",
-      description: "Walk south from Mozambique Hall down Road 1 past Moremi Garden. Turn left onto the library road. The library is straight ahead."
+      description: "Walk south from Mozambique Hall down Road 1 past Moremi Hall. Turn left onto the library road. The library is straight ahead."
+    },
+    {
+      id: "r5",
+      fromId: "moremi",
+      toId: "faculty_of_science",
+      distance: "700m",
+      timeWalking: "9 mins",
+      shuttleAvailable: false,
+      description: "Walk from Moremi gate towards the Sports Complex, cross the main walkway, and continue past Motion Ground to the Faculty of Science buildings."
     },
     {
       id: "r6",

@@ -286,15 +286,19 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({
                         );
                         onRouteComputedRef.current(route, dest.name);
                         const active = route.osrmRoute ?? route.googleRoute;
-                        output = {
-                          success: true,
-                          totalDistance: active?.totalDistance ?? 'unknown',
-                          totalDuration: active?.totalDuration ?? 'unknown',
-                          firstThreeSteps: (active?.steps ?? [])
-                            .slice(0, 3)
-                            .map(s => s.instruction),
-                          totalSteps: active?.steps?.length ?? 0,
-                        };
+                        if (!active) {
+                          output = { error: 'Network error computing route. Tell the user you cannot load directions right now.' };
+                        } else {
+                          output = {
+                            success: true,
+                            totalDistance: active.totalDistance,
+                            totalDuration: active.totalDuration,
+                            firstThreeSteps: active.steps
+                              .slice(0, 3)
+                              .map(s => s.instruction),
+                            totalSteps: active.steps.length,
+                          };
+                        }
                       }
 
                     } else if (fc.name === 'switch_map_view') {
@@ -528,7 +532,7 @@ STRICT RULES:
         <div className="text-center space-y-2">
           <h2 className="text-white text-2xl font-bold">Live Voice Chat</h2>
           <p className="text-gray-400">
-            {status === 'connecting' ? 'Connecting…' :
+            {status === 'connecting' ? 'Connecting to UniNav…' :
              status === 'connected'  ? 'Listening…'           :
              status === 'error'      ? 'Connection Failed'    : 'Ready'}
           </p>
