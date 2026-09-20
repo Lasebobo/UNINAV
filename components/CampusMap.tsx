@@ -502,15 +502,15 @@ export const CampusMap: React.FC<CampusMapProps> = ({
 
           {/* Legend */}
           {viewMode === 'schematic' && (
-            <div className="hidden md:block absolute bottom-6 left-6 bg-white p-3.5 rounded-xl shadow-md border border-gray-100 min-w-[120px] z-[400]">
-              <h4 className="text-xs font-semibold text-gray-700 mb-2.5">Legend</h4>
-              <div className="flex flex-col gap-2">
+            <div className="absolute bottom-4 left-3 md:bottom-6 md:left-6 bg-white/95 backdrop-blur-sm p-2 md:p-3.5 rounded-lg md:rounded-xl shadow-sm md:shadow-md border border-gray-100 min-w-[80px] md:min-w-[120px] z-[400]">
+              <h4 className="text-[10px] md:text-xs font-semibold text-gray-700 mb-1.5 md:mb-2.5">Legend</h4>
+              <div className="flex flex-col gap-1 md:gap-2">
                 {Array.from(new Set(Object.values(typeConfig).map((t) => JSON.stringify(t)))).map((tStr, idx) => {
                   const tc = JSON.parse(tStr);
                   return (
-                    <div key={idx} className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tc.color }}></div>
-                      <span className="text-[11px] text-gray-600 font-medium">{tc.label}</span>
+                    <div key={idx} className="flex items-center gap-1.5 md:gap-2">
+                      <div className="w-2 h-2 md:w-3 md:h-3 rounded-full" style={{ backgroundColor: tc.color }}></div>
+                      <span className="text-[9px] md:text-[11px] text-gray-600 font-medium leading-none">{tc.label}</span>
                     </div>
                   );
                 })}
