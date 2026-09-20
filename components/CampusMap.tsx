@@ -136,11 +136,13 @@ export const CampusMap: React.FC<CampusMapProps> = ({
   const CAMPUS_CENTRE = { lat: 7.5197, lng: 4.5190 };
 
   const typeConfig: Record<string, { color: string; label: string }> = {
-    academic:    { color: '#3b82f6', label: 'Building' },
-    facility:    { color: '#22c55e', label: 'Facility' },
-    transport:   { color: '#f97316', label: 'Landmark' },
-    residential: { color: '#a855f7', label: 'Department' },
-    custom:      { color: '#f97316', label: 'Landmark' },
+    academic:        { color: '#3b82f6', label: 'Academic' },
+    custom:          { color: '#64748b', label: 'Custom' },
+    facility:        { color: '#22c55e', label: 'Facility' },
+    hostel:          { color: '#a855f7', label: 'Hostel' },
+    landmark:        { color: '#f97316', label: 'Landmark' },
+    'lecture rooms': { color: '#eab308', label: 'Lecture rooms' },
+    religious:       { color: '#ec4899', label: 'Religious' },
   };
   const getPinStyle = (type: string) => typeConfig[type] || { color: '#3b82f6', label: 'Building' };
 
@@ -783,11 +785,13 @@ export const CampusMap: React.FC<CampusMapProps> = ({
                   onChange={(e) => setAddLocType(e.target.value)}
                   className="w-full text-sm border border-gray-200 rounded-xl px-4 py-2.5 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
                 >
-                  <option value="custom">Landmark / Custom</option>
-                  <option value="academic">Academic / Building</option>
+                  <option value="academic">Academic</option>
+                  <option value="custom">Custom</option>
                   <option value="facility">Facility</option>
-                  <option value="residential">Residential / Department</option>
-                  <option value="transport">Transport Hub</option>
+                  <option value="hostel">Hostel</option>
+                  <option value="landmark">Landmark</option>
+                  <option value="lecture rooms">Lecture rooms</option>
+                  <option value="religious">Religious</option>
                 </select>
               </div>
 
