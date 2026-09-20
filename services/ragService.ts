@@ -477,6 +477,16 @@ export const processQuery = async (
 
   let intent = detectLocationIntent(userQuery);
 
+  // --- AFFIRMATIVE INTERCEPT FOR MODE A ---
+  // If the user says "yes" after we asked "Would you like turn-by-turn directions to this location?"
+  const isAffirmative = /^(yes|yeah|yep|sure|please|ok|okay|do it|i would|please do)\b/i.test(lowerQuery);
+  if (isAffirmative && intent === 'none' && history.length > 0) {
+    const lastBotMessage = history[history.length - 1];
+    if (lastBotMessage.role === 'bot' && lastBotMessage.isDescriptionMode && lastBotMessage.suggestedLocationId) {
+      intent = 'directions';
+    }
+  }
+
   // If the query is just a direct location name/alias (e.g., "Library" or "Fajuyi Hall"),
   // promote it to a description intent so they get the location card + directions prompt.
   const isDirectLocationName = allLocations.some(loc => {
