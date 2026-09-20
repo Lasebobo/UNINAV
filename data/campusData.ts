@@ -7,6 +7,79 @@ import { KnowledgeBase } from '../types';
 const RAW_CAMPUS_DATA = {
   locations: [
     {
+      id: "religious_ground_bus_stop",
+      name: "Religious Ground & Banking Area Bus Stop",
+      aliases: ["religious ground bus stop", "banking area bus stop", "religious ground", "bank area"],
+      type: "facility",
+      description: "A major transport and commercial hub near the campus religious centers and banks.",
+      lat: 7.512898974182271,
+      lng: 4.522942396403121
+    },
+    {
+      id: "central_mosque",
+      name: "OAU Central Mosque",
+      aliases: ["central mosque", "mosque", "oau central mosque"],
+      type: "religious",
+      description: "The main place of worship for the Muslim community on campus.",
+      lat: 7.511845048871229,
+      lng: 4.51689852397389
+    },
+    {
+      id: "our_lady_church",
+      name: "Our Lady of Perpetual Light Catholic Church",
+      aliases: ["catholic church", "our lady", "our lady of perpetual light", "church"],
+      type: "religious",
+      description: "The primary Catholic church on the OAU campus.",
+      lat: 7.510894373026638,
+      lng: 4.516104376780542
+    },
+    {
+      id: "celestial_church",
+      name: "Celestial Church Of Christ Students' Parish OAU",
+      aliases: ["celestial church", "ccc", "students parish"],
+      type: "religious",
+      description: "A parish serving students of the Celestial Church of Christ on campus.",
+      lat: 7.5094826049592,
+      lng: 4.51687287580722
+    },
+    {
+      id: "deeper_life_fellowship",
+      name: "Deeper Life Campus Fellowship, OAU",
+      aliases: ["deeper life", "dlcf", "deeper life campus fellowship"],
+      type: "religious",
+      description: "The campus fellowship center for Deeper Life members.",
+      lat: 7.508978400966634,
+      lng: 4.516319104449762
+    },
+    {
+      id: "new_market",
+      name: "New Market",
+      aliases: ["new market", "market"],
+      type: "facility",
+      description: "A vibrant market serving the campus community with various goods and services.",
+      lat: 7.517703909069604,
+      lng: 4.51250511605441
+    },
+    {
+      id: "etf_hall",
+      name: "ETF Hall",
+      aliases: ["etf", "etf hall"],
+      type: "hostel",
+      description: "A hall of residence supported by the Education Trust Fund.",
+      lat: 7.51818255652374,
+      lng: 4.514597239005712
+    },
+    {
+      id: "pg_hall",
+      name: "Postgraduate Hall",
+      aliases: ["pg hall", "postgraduate hall", "pg"],
+      type: "hostel",
+      description: "The official residence for postgraduate students on campus.",
+      lat: 7.522210113511975,
+      lng: 4.516561688731902
+    },
+
+    {
       id: "oau_ict_centre",
       name: "OAU ICT Centre",
       aliases: ["ict", "ict centre", "intecu", "computer building"],
