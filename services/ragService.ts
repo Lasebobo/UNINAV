@@ -727,7 +727,7 @@ Question: ${userQuery}`;
      
      const response = await generateGeminiResponse(formatHistory(prompt), {
        modelType: 'thinking',
-       systemInstruction: "You are an expert campus planner. Think deeply to provide a comprehensive answer. Use the provided context to answer if possible. If the context does not contain the answer, use your built-in knowledge or Google Search to find the information. Do not say 'the provided context does not include information'. NEVER output raw latitude/longitude coordinates; always use descriptive landmarks.",
+       systemInstruction: "You are an expert campus planner. Think deeply to provide a comprehensive answer. Use the provided context to answer if possible. If the context does not contain the answer, you MUST state that you do not have information about it in the campus database. DO NOT hallucinate location details or use outside knowledge to invent descriptions for buildings. NEVER output raw latitude/longitude coordinates; always use descriptive landmarks.",
        signal: abortSignal
      });
 
@@ -752,8 +752,9 @@ Question: ${userQuery}`;
 
   const systemInstruction = `
     You are the OAU Campus Guide. Answer questions about campus life, departments, facilities, history, and events.
-    Use the provided context to answer if possible. If the context does not contain the answer, use your built-in knowledge.
-    Do not say "the provided context does not include information" — just give the best answer you can.
+    You must rely STRICTLY on the provided context to answer. 
+    If the provided context does not contain information about a specific location, building, or facility, you MUST reply: "I couldn't find information about that in the campus database." 
+    DO NOT invent details, and DO NOT use outside knowledge to guess location descriptions.
 
     STRICT RULES:
     - NEVER generate walking directions, route steps, or turn-by-turn navigation. If a user asks how to get somewhere, say "Please ask for directions and I will load them from the routing engine."

@@ -435,6 +435,16 @@ const RAW_CAMPUS_DATA = {
       imageUrl: "images/angola_hall_obafemi_awolowo_university.jpg"
     },
     {
+      id: "alumni_hall",
+      name: "Alumni Hall",
+      aliases: ["alumni hall", "alumni"],
+      type: "hostel",
+      description: "A popular female hall of residence on the OAU campus.",
+      lat: 7.521690438247134,
+      lng: 4.517172839088474,
+      imageUrl: ""
+    },
+    {
       id: "new_senate_building",
       name: "New Senate Building",
       aliases: ["new senate building", "new senate", "Senate building"],

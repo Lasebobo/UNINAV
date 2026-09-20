@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Type } from "@google/genai";
-import { Minimize2, Maximize2, X } from 'lucide-react';
+import { Minimize2, Maximize2, X, Mic, MicOff } from 'lucide-react';
 import { CAMPUS_DATA } from '../data/campusData';
 import { fetchBothRoutes, RouteResult } from '../services/routeService';
 
@@ -85,6 +85,7 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({
   const [status, setStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [volume, setVolume] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   // Input audio
   const inputCtxRef  = useRef<AudioContext | null>(null);
@@ -449,6 +450,16 @@ STRICT RULES:
 
   // ─── UI ─────────────────────────────────────────────────────────────────────
 
+  const toggleMute = () => {
+    if (streamRef.current) {
+      const audioTracks = streamRef.current.getAudioTracks();
+      audioTracks.forEach(track => {
+        track.enabled = isMuted; // If currently muted (isMuted = true), set enabled to true (unmute)
+      });
+      setIsMuted(!isMuted);
+    }
+  };
+
   if (!visible) return null;
 
   if (isMinimized) {
@@ -478,6 +489,9 @@ STRICT RULES:
         </div>
         
         <div className="flex items-center gap-1 border-l pl-3 border-gray-100">
+          <button onClick={toggleMute} className={`p-2 transition-colors ${isMuted ? 'text-red-500' : 'text-gray-400 hover:text-blue-600'}`} title={isMuted ? "Unmute" : "Mute"}>
+            {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
+          </button>
           <button onClick={() => setIsMinimized(false)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Maximize">
             <Maximize2 size={18} />
           </button>
@@ -544,9 +558,18 @@ STRICT RULES:
         </div>
         
         {status === 'connected' && (
-           <p className="text-white/50 text-sm mt-4 cursor-pointer hover:text-white transition-colors" onClick={() => setIsMinimized(true)}>
-             Tap to minimize and view the map
-           </p>
+           <div className="flex flex-col items-center gap-6 mt-4">
+             <button 
+               onClick={toggleMute} 
+               className={`p-4 rounded-full transition-all duration-200 ${isMuted ? 'bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.4)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
+               title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
+             >
+               {isMuted ? <MicOff size={28} /> : <Mic size={28} />}
+             </button>
+             <p className="text-white/50 text-sm cursor-pointer hover:text-white transition-colors" onClick={() => setIsMinimized(true)}>
+               Tap to minimize and view the map
+             </p>
+           </div>
         )}
       </div>
     </div>
