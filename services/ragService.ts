@@ -48,9 +48,27 @@ const retrieveDocuments = async (query: string, allLocations: CampusLocation[] =
   return results.sort((a, b) => b.score - a.score).slice(0, 3);
 };
 
-const findLocationInQuery = (query: string, locations: CampusLocation[]): string | undefined => {
+function levenshteinDistance(a: string, b: string): number {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
+      const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1,
+        matrix[j - 1][i] + 1,
+        matrix[j - 1][i - 1] + indicator
+      );
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+const findLocationInQuery = (query: string, locations: CampusLocation[], exactTokenMatch: boolean = false): string | undefined => {
   const lowerQuery = query.toLowerCase();
-  // Sort by name length descending to match specific names before substrings if any
   const sorted = [...locations].sort((a,b) => b.name.length - a.name.length);
   
   for (const loc of sorted) {
@@ -59,6 +77,35 @@ const findLocationInQuery = (query: string, locations: CampusLocation[]): string
       if (lowerQuery.includes(alias.toLowerCase())) return loc.id;
     }
   }
+
+  const queryTokens = lowerQuery.replace(/[^\w\s]/g, '').split(/\s+/).filter(t => t.length > 2);
+  if (queryTokens.length === 0) return undefined;
+
+  for (const loc of sorted) {
+    const allNames = [loc.name.toLowerCase(), ...loc.aliases.map(a => a.toLowerCase())];
+    for (const name of allNames) {
+      const nameTokens = name.replace(/[^\w\s]/g, '').split(/\s+/).filter(t => t.length > 2);
+      if (nameTokens.length === 0) continue;
+      
+      if (exactTokenMatch && queryTokens.length !== nameTokens.length) continue;
+
+      for (let i = 0; i <= queryTokens.length - nameTokens.length; i++) {
+        let totalDistance = 0;
+        let totalChars = 0;
+        
+        for (let j = 0; j < nameTokens.length; j++) {
+          totalDistance += levenshteinDistance(queryTokens[i+j], nameTokens[j]);
+          totalChars += nameTokens[j].length;
+        }
+        
+        const maxAllowedDistance = Math.max(1, Math.floor(totalChars / 5));
+        if (totalDistance <= maxAllowedDistance && totalDistance <= nameTokens.length * 2) {
+          return loc.id;
+        }
+      }
+    }
+  }
+
   return undefined;
 };
 
@@ -68,37 +115,19 @@ const findOriginAndDestination = (
 ): { originId?: string; destinationId?: string } => {
   const lowerQuery = query.toLowerCase();
 
-  const findId = (text: string) => {
-    // Sort by name length descending to avoid substring conflicts
-    const sorted = [...locations].sort((a, b) => b.name.length - a.name.length);
-    for (const loc of sorted) {
-      if (text.includes(loc.name.toLowerCase())) return loc.id;
-      for (const alias of loc.aliases) {
-        if (text.includes(alias.toLowerCase())) return loc.id;
-      }
-    }
-    return undefined;
-  };
-
-  // Match "from X to Y" pattern
   const fromToMatch = lowerQuery.match(/from\s+(.+?)\s+to\s+(.+)/);
   if (fromToMatch) {
-    const fromText = fromToMatch[1].trim();
-    const toText = fromToMatch[2].trim();
     return {
-      originId: findId(fromText),
-      destinationId: findId(toText),
+      originId: findLocationInQuery(fromToMatch[1], locations),
+      destinationId: findLocationInQuery(fromToMatch[2], locations),
     };
   }
 
-  // Match "to Y from X" pattern
   const toFromMatch = lowerQuery.match(/to\s+(.+?)\s+from\s+(.+)/);
   if (toFromMatch) {
-    const toText = toFromMatch[1].trim();
-    const fromText = toFromMatch[2].trim();
     return {
-      originId: findId(fromText),
-      destinationId: findId(toText),
+      originId: findLocationInQuery(toFromMatch[2], locations),
+      destinationId: findLocationInQuery(toFromMatch[1], locations),
     };
   }
 
@@ -489,11 +518,8 @@ export const processQuery = async (
 
   // If the query is just a direct location name/alias (e.g., "Library" or "Fajuyi Hall"),
   // promote it to a description intent so they get the location card + directions prompt.
-  const isDirectLocationName = allLocations.some(loc => {
-    const nameLower = loc.name.toLowerCase();
-    const cleanQuery = lowerQuery.replace(/^(the|a|an)\s+/i, '').trim();
-    return nameLower === cleanQuery || loc.aliases.some(alias => alias.toLowerCase() === cleanQuery);
-  });
+  const cleanQuery = lowerQuery.replace(/^(the|a|an)\s+/i, '').trim();
+  const isDirectLocationName = !!findLocationInQuery(cleanQuery, allLocations, true);
 
   if (isDirectLocationName && intent === 'none') {
     intent = 'description';
@@ -508,7 +534,14 @@ export const processQuery = async (
   if (intent === 'description' && suggestedLocationId) {
     // Build context from local DB first
     const searchResults = await retrieveDocuments(userQuery, allLocations);
-    const contextStrings = searchResults.map(r => `[${r.source}] ${r.content}`);
+    let contextStrings = searchResults.map(r => `[${r.source}] ${r.content}`);
+    
+    // Inject the found location to guarantee context is present even if fuzzy-matched
+    const destLoc = allLocations.find(l => l.id === suggestedLocationId);
+    if (destLoc && !contextStrings.some(c => c.toLowerCase().includes(destLoc.name.toLowerCase()))) {
+      const verificationStatus = destLoc.verified === false ? "Unverified (Community Added)" : "Verified";
+      contextStrings.unshift(`[Location DB] Location: ${destLoc.name}. Type: ${destLoc.type}. Details: ${destLoc.description}. Status: ${verificationStatus}. Aliases: ${destLoc.aliases.join(', ')}`);
+    }
 
     const modeASystemInstruction = `You are the OAU Campus Navigation Guide.
 
@@ -756,6 +789,12 @@ Question: ${userQuery}`;
   const searchResults = await retrieveDocuments(userQuery, allLocations);
   let contextStrings = searchResults.map(r => `[${r.source}] ${r.content}`);
   
+  const destLoc = suggestedLocationId ? allLocations.find(l => l.id === suggestedLocationId) : null;
+  if (destLoc && !contextStrings.some(c => c.toLowerCase().includes(destLoc.name.toLowerCase()))) {
+      const verificationStatus = destLoc.verified === false ? "Unverified (Community Added)" : "Verified";
+      contextStrings.unshift(`[Location DB] Location: ${destLoc.name}. Type: ${destLoc.type}. Details: ${destLoc.description}. Status: ${verificationStatus}. Aliases: ${destLoc.aliases.join(', ')}`);
+  }
+
   if (contextStrings.length === 0) {
     contextStrings = ["No local database matches found."];
   }
