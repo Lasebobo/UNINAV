@@ -84,7 +84,7 @@ export const LiveAPI: React.FC<LiveAPIProps> = ({
 }) => {
   const [status, setStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [volume, setVolume] = useState(0);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
 
   // Input audio
@@ -492,9 +492,6 @@ STRICT RULES:
           <button onClick={toggleMute} className={`p-2 transition-colors ${isMuted ? 'text-red-500' : 'text-gray-400 hover:text-blue-600'}`} title={isMuted ? "Unmute" : "Mute"}>
             {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
           </button>
-          <button onClick={() => setIsMinimized(false)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Maximize">
-            <Maximize2 size={18} />
-          </button>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-red-500 transition-colors" title="Close">
             <X size={20} />
           </button>
@@ -503,75 +500,5 @@ STRICT RULES:
     );
   }
 
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      {/* Controls */}
-      <div className="absolute top-6 right-6 flex items-center gap-4">
-        <button
-          onClick={() => setIsMinimized(true)}
-          className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
-          title="Minimize"
-        >
-          <Minimize2 size={24} />
-        </button>
-        <button
-          onClick={onClose}
-          className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
-          title="Close"
-        >
-          <X size={24} />
-        </button>
-      </div>
-
-      <div className="flex flex-col items-center gap-8 w-full max-w-md px-8">
-        {/* Visualiser */}
-        <div
-          className={[
-            'w-32 h-32 rounded-full flex items-center justify-center transition-all duration-200',
-            status === 'connected'
-              ? 'bg-blue-600 shadow-[0_0_40px_rgba(37,99,235,0.6)]'
-              : 'bg-gray-700',
-          ].join(' ')}
-          style={{ transform: status === 'connected' ? `scale(${1 + volume * 0.2})` : 'scale(1)' }}
-        >
-          {status === 'connecting' ? (
-            <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
-          ) : status === 'error' ? (
-            <div className="text-red-500 text-3xl">!</div>
-          ) : (
-            <div className="w-4 h-4 bg-white rounded-full" />
-          )}
-        </div>
-
-        <div className="text-center space-y-2">
-          <h2 className="text-white text-2xl font-bold">Live Voice Chat</h2>
-          <p className="text-gray-400">
-            {status === 'connecting' ? 'Connecting to UniNav…' :
-             status === 'connected'  ? 'Listening…'           :
-             status === 'error'      ? 'Connection Failed'    : 'Ready'}
-          </p>
-          {status === 'error' && (
-            <p className="text-red-400 text-sm mt-2">
-              Check your microphone permissions and API key.
-            </p>
-          )}
-        </div>
-        
-        {status === 'connected' && (
-           <div className="flex flex-col items-center gap-6 mt-4">
-             <button 
-               onClick={toggleMute} 
-               className={`p-4 rounded-full transition-all duration-200 ${isMuted ? 'bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.4)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
-               title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
-             >
-               {isMuted ? <MicOff size={28} /> : <Mic size={28} />}
-             </button>
-             <p className="text-white/50 text-sm cursor-pointer hover:text-white transition-colors" onClick={() => setIsMinimized(true)}>
-               Tap to minimize and view the map
-             </p>
-           </div>
-        )}
-      </div>
-    </div>
-  );
+  return null;
 };

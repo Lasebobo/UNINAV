@@ -78,7 +78,8 @@ const findLocationInQuery = (query: string, locations: CampusLocation[], exactTo
     }
   }
 
-  const queryTokens = lowerQuery.replace(/[^\w\s]/g, '').split(/\s+/).filter(t => t.length > 2);
+  const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'in', 'where', 'how', 'what', 'can', 'you', 'i', 'a', 'an', 'of', 'and', 'to', 'for', 'with', 'are', 'am', 'do', 'does', 'it', 'sure']);
+  const queryTokens = lowerQuery.replace(/[^\w\s]/g, '').split(/\s+/).filter(t => t.length > 2 && !stopWords.has(t));
   if (queryTokens.length === 0) return undefined;
 
   for (const loc of sorted) {
@@ -98,7 +99,7 @@ const findLocationInQuery = (query: string, locations: CampusLocation[], exactTo
           totalChars += nameTokens[j].length;
         }
         
-        const maxAllowedDistance = Math.max(1, Math.floor(totalChars / 5));
+        const maxAllowedDistance = Math.floor(totalChars / 4);
         if (totalDistance <= maxAllowedDistance && totalDistance <= nameTokens.length * 2) {
           return loc.id;
         }
@@ -303,7 +304,8 @@ export const processQuery = async (
   
   const isGenericOauQuery = (query: string) => {
     const normalized = query.trim().toLowerCase();
-    return /^(what(?:'s| is)?|tell me about|describe|define|who is|about)\s+(?:the\s+)?(?:obafemi awolowo university|obafemi awolowo|oau)(?:\s+(?:like|known for|famous for|in nigeria|in ile-?ife|as a university|as an university|as an institution))?[\s\?\.]*$/i.test(normalized);
+    return /\b(what(?:'s| is)?|tell me about|describe|define|who is|about|full meaning of|meaning of|stand for)\s+(?:the\s+)?(?:obafemi awolowo university|obafemi awolowo|oau)\b/i.test(normalized) || 
+           /^(obafemi awolowo university|obafemi awolowo|oau)[\s\?\.]*$/i.test(normalized);
   };
 
   const getSuggestedLocation = (answerText: string = "") => {
@@ -801,9 +803,10 @@ Question: ${userQuery}`;
 
   const systemInstruction = `
     You are the OAU Campus Guide. Answer questions about campus life, departments, facilities, history, and events.
-    You must rely STRICTLY on the provided context to answer. 
-    If the provided context does not contain information about a specific location, building, or facility, you MUST reply: "I couldn't find information about that in the campus database." 
-    DO NOT invent details, and DO NOT use outside knowledge to guess location descriptions.
+    You must rely on the provided context to answer questions about the campus. 
+    If the user asks about a specific campus location, building, or facility that is not in the context, you MUST reply: "I couldn't find information about that in the campus database." 
+    However, if the user asks a general knowledge question (e.g., math, science, history, general facts), you may answer it using your general knowledge.
+    DO NOT invent details about the campus, and DO NOT use outside knowledge to guess campus location descriptions.
 
     STRICT RULES:
     - NEVER generate walking directions, route steps, or turn-by-turn navigation. If a user asks how to get somewhere, say "Please ask for directions and I will load them from the routing engine."
