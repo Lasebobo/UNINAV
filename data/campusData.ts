@@ -235,7 +235,7 @@ const RAW_CAMPUS_DATA = {
       aliases: ["new market", "market"],
       type: "facility",
       description:
-        "A vibrant market serving the campus community with various goods and services.",
+        "New Market, popularly known as New Market (OAU Central Market), is the commercial heartbeat of the Obafemi Awolowo University (OAU) campus in Ile-Ife, Osun State, Nigeria. It serves as a vibrant, one-stop hub where students, staff, and visitors can find almost anything they need—ranging from food and groceries to tech repairs, clothing, books, and essential services.",
       lat: 7.517703909069604,
       lng: 4.51250511605441,
     },

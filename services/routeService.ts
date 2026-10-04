@@ -133,8 +133,7 @@ function buildOsrmInstruction(step: any, startPoint?: LatLng): string {
   let baseInstruction = '';
 
   if (type === 'depart') {
-    const dirStr = compassDir ? ` ${compassDir}` : '';
-    baseInstruction = `Head${dirStr} on ${roadName} for ${distance}`;
+    baseInstruction = `Head straight on ${roadName} for ${distance}`;
   } else if (type === 'arrive') {
     baseInstruction = `Arrive at your destination on ${roadName}`;
   } else if (type === 'turn' || type === 'ramp' || type === 'fork' || type === 'merge' || type === 'new name') {
