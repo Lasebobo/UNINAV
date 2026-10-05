@@ -97,8 +97,8 @@ const RAW_CAMPUS_DATA = {
       type: "academic",
       description:
         "Dedicated to the training of educators and teachers, housing various education-related departments and research centers.",
-      lat: 7.513514,
-      lng: 4.525341,
+      lat: 7.520650226913,
+      lng: 4.523526828652767,
     },
     {
       id: "central_science_laboratory",
@@ -807,6 +807,24 @@ const RAW_CAMPUS_DATA = {
         "The BOO Lecture Theatres, consisting of BOO A, BOO B, and BOO C, are prominent large-capacity lecture auditoriums widely used for introductory undergraduate lectures, massive joint university classes, and administrative examinations.",
       lat: 7.519070733959724,
       lng: 4.525294294553642,
+    },
+    {
+      id: "faculty_of_agriculture",
+      name: "Faculty of Agriculture",
+      aliases: ["faculty of agriculture", "agric", "agric faculty"],
+      type: "academic",
+      description: "The primary hub for agricultural sciences, research, and training.",
+      lat: 7.522013826979838,
+      lng: 4.5263637153426,
+    },
+    {
+      id: "tonkere_gate_bus_stop",
+      name: "Tonkere Gate Bus Stop",
+      aliases: ["tonkere gate bus stop", "tonkere gate", "tonkere bus stop", "tonkere"],
+      type: "transportation",
+      description: "A major transit and access point at the Tonkere gate.",
+      lat: 7.528021300401521,
+      lng: 4.5280194050308245,
     },
   ],
 
