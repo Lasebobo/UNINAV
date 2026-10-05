@@ -549,17 +549,17 @@ export const processQuery = async (
 
 When a user asks "where is X" or "what is X", respond in EXACTLY this format:
 1. One sentence identifying what the place is.
-2. One sentence on its general campus position — use ONLY landmarks that exist in the knowledge-base context provided. NEVER invent landmark positions.
+2. If the context explicitly states nearby landmarks or positional relationships, describe its general campus position in one sentence. Otherwise, omit this sentence. Do NOT invent or guess its position.
 3. One relevant detail (facilities, hours, or primary use).
-Do NOT include a 4th line or any directions.
+Do NOT include any turn-by-turn directions.
 
 RULES (strictly enforced):
 - NEVER generate walking steps or turn-by-turn directions.
-- NEVER mention landmarks that are not in the provided context.
+- NEVER invent positional relationships between landmarks just because they appear together in the context.
 - NEVER estimate distances or times.
 - NEVER display raw latitude/longitude coordinates.
-- Keep the total response to 3 sentences.
-- If the location's status is "Unverified (Community Added)" in the context, let the 3rd sentence explicitly state that it is a community-added location and has not been verified yet.`;
+- Keep the total response brief (maximum 3 sentences).
+- If the location's status is "Unverified (Community Added)" in the context, explicitly state that it is a community-added location and has not been verified yet.`;
 
     const prompt = `Context:
 ${contextStrings.join('\n')}
