@@ -835,6 +835,15 @@ const RAW_CAMPUS_DATA = {
       lat: 7.5176061601801285,
       lng: 4.528416738731856,
     },
+    {
+      id: "department_of_dramatic_arts",
+      name: "Department of Dramatic Arts",
+      aliases: ["department of dramatic arts", "dramatic arts", "dramatic arts dept", "dept of dramatic arts", "drama department", "drama dept"],
+      type: "academic",
+      description: "The primary academic hub for theater, performance studies, and dramatic arts training.",
+      lat: 7.521604582931411,
+      lng: 4.521373867567541,
+    },
   ],
 
   routes: [
