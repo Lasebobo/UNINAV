@@ -87,8 +87,8 @@ const RAW_CAMPUS_DATA = {
       type: "academic",
       description:
         "The central academic hub for humanities and arts disciplines, featuring lecture rooms, departmental offices, and student spaces.",
-      lat: 7.513514,
-      lng: 4.525341,
+      lat: 7.519622819355907,
+      lng: 4.524052596403191,
     },
     {
       id: "faculty_of_education",
