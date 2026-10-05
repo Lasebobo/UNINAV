@@ -826,6 +826,15 @@ const RAW_CAMPUS_DATA = {
       lat: 7.528021300401521,
       lng: 4.5280194050308245,
     },
+    {
+      id: "faculty_of_technology",
+      name: "Faculty of Technology",
+      aliases: ["faculty of technology", "tech faculty", "tech", "faculty of tech"],
+      type: "academic",
+      description: "The main academic and administrative building for engineering and technology studies.",
+      lat: 7.5176061601801285,
+      lng: 4.528416738731856,
+    },
   ],
 
   routes: [
