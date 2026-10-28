@@ -622,9 +622,10 @@ Question: ${userQuery}`;
 
     const origin = customOriginLoc?.lat && customOriginLoc?.lng
       ? { lat: customOriginLoc.lat, lng: customOriginLoc.lng }  // Use stated origin
-      : userLocation 
-        ? getRoutingOrigin(userLocation)                          // Use GPS
-        : undefined;
+      : userLocation
+        ? getRoutingOrigin(userLocation)                         // Use GPS, snapping near-gate users to the gate
+        : OAU_MAIN_GATE;                                          // GPS unavailable: start at the main gate
+    const usingGateFallback = !customOriginLoc && !userLocation;
 
     const destination = resolvedDestLoc?.lat && resolvedDestLoc?.lng
       ? { lat: resolvedDestLoc.lat, lng: resolvedDestLoc.lng }
@@ -648,12 +649,14 @@ Question: ${userQuery}`;
     const locationName = resolvedDestLoc?.name ?? 'your destination';
 
     if (!directionsPayload || (!directionsPayload.osrmRoute && !directionsPayload.googleRoute)) {
-      // Both engines failed — use the prescribed fallback message
-      answerText = `I couldn't load directions right now. Tap **View on Map** to navigate to **${locationName}**.`;
+      // Both engines failed — clearly disclose the gate origin when GPS was unavailable.
+      answerText = usingGateFallback
+        ? `Your GPS location is unavailable, so I tried starting from **OAU Main Gate**. I couldn't load directions to **${locationName}** right now. Tap **View on Map** to try again.`
+        : `I couldn't load directions right now. Tap **View on Map** to navigate to **${locationName}**.`;
     } else {
       // Show a brief intro — the actual numbered steps are rendered by the UI component
       const route = directionsPayload.osrmRoute ?? directionsPayload.googleRoute!;
-      const originName = customOriginLoc?.name ?? 'your location';
+      const originName = customOriginLoc?.name ?? (usingGateFallback ? 'OAU Main Gate (GPS unavailable)' : 'your current location');
       answerText = `Here are walking directions from **${originName}** to **${locationName}** (${route.totalDistance} · ${route.totalDuration}).
 
 📌 **Campus Transport Pricing:**
@@ -701,9 +704,10 @@ Question: ${userQuery}`;
 
     const navOrigin = customOriginLoc?.lat && customOriginLoc?.lng
       ? { lat: customOriginLoc.lat, lng: customOriginLoc.lng }
-      : userLocation 
+      : userLocation
         ? getRoutingOrigin(userLocation)
-        : undefined;
+        : OAU_MAIN_GATE;
+    const usingGateFallback = !customOriginLoc && !userLocation;
 
     const navDestCoords = navDest?.lat && navDest?.lng
       ? { lat: navDest.lat, lng: navDest.lng }
@@ -721,12 +725,14 @@ Question: ${userQuery}`;
     }
 
     const navName = navDest?.name ?? 'your destination';
-    const originName = customOriginLoc?.name ?? 'your location';
+    const originName = customOriginLoc?.name ?? (usingGateFallback ? 'OAU Main Gate (GPS unavailable)' : 'your current location');
 
     if (!navPayload || (!navPayload.osrmRoute && !navPayload.googleRoute)) {
       return {
         answer: navDest
-          ? `I couldn't load directions right now. Tap **View on Map** to navigate to **${navName}**.`
+          ? usingGateFallback
+            ? `Your GPS location is unavailable, so I tried starting from **OAU Main Gate**. I couldn't load directions to **${navName}** right now. Tap **View on Map** to try again.`
+            : `I couldn't load directions right now. Tap **View on Map** to navigate to **${navName}**.`
           : `I couldn't find a route for that. Try asking "How do I get to [location name]?" or open the map to browse all locations.`,
         context: ['Navigation safety guard — routing engine required'],
         suggestedLocationId: resolvedDestId,

@@ -215,10 +215,8 @@ export const CampusMap: React.FC<CampusMapProps> = ({
     if (!apiKey) return '';
     const base = 'https://www.google.com/maps/embed/v1';
     if (activeDestination?.lat && activeDestination?.lng) {
-      const originCoords = userLocation ? getRoutingOrigin(userLocation) : undefined;
-      const origin = originCoords
-        ? `${originCoords.lat},${originCoords.lng}`
-        : 'Obafemi+Awolowo+University,Ile-Ife';
+      const originCoords = userLocation ? getRoutingOrigin(userLocation) : OAU_MAIN_GATE;
+      const origin = `${originCoords.lat},${originCoords.lng}`;
       const dest = `${activeDestination.lat},${activeDestination.lng}`;
       return `${base}/directions?origin=${origin}&destination=${dest}&mode=walking&maptype=roadmap&key=${apiKey}`;
     }
@@ -234,8 +232,7 @@ export const CampusMap: React.FC<CampusMapProps> = ({
 
     // If the user is outside campus but close to the main gate, snap origin to the gate.
     // If they are farther away, use their real location so long-distance routing stays accurate.
-    const rawOrigin = userLocation ?? CAMPUS_CENTRE;
-    const origin = userLocation ? getRoutingOrigin(userLocation) : rawOrigin;
+    const origin = userLocation ? getRoutingOrigin(userLocation) : OAU_MAIN_GATE;
     const offCampus = userLocation ? !isUserOnCampus(userLocation) : false;
     const useRawGoogleNames = viewMode === 'google';
     // Attach the offCampus flag so the panel can show the gate note

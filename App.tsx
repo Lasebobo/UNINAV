@@ -218,8 +218,7 @@ const App: React.FC = () => {
   // Real-time Geolocation Hook
   useEffect(() => {
     if (!navigator.geolocation) {
-      setLocationError("Geolocation is not supported by your browser.");
-      setUserLocation(OAU_MAIN_GATE); // Default fallback: Campus Gate
+      setLocationError("Geolocation is unavailable. Directions will start at OAU Main Gate.");
       return;
     }
 
@@ -243,16 +242,16 @@ const App: React.FC = () => {
         console.warn("Geolocation error:", error);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            setLocationError("Location permission denied. Using default campus gate location.");
+            setLocationError("Location permission denied. Directions will start at OAU Main Gate.");
             break;
           case error.POSITION_UNAVAILABLE:
-            setLocationError("Location unavailable. Using default campus gate location.");
+            setLocationError("Location unavailable. Directions will start at OAU Main Gate.");
             break;
           case error.TIMEOUT:
-            setLocationError("Location request timed out.");
+            setLocationError("Location request timed out. Directions will start at OAU Main Gate.");
             break;
           default:
-            setLocationError("An unknown location error occurred.");
+            setLocationError("Location is unavailable. Directions will start at OAU Main Gate.");
             break;
         }
       },
@@ -369,12 +368,18 @@ const App: React.FC = () => {
       if (directionsPayload && voiceMode) {
         const activeRoute = directionsPayload.osrmRoute ?? directionsPayload.googleRoute;
         const firstStep = activeRoute?.steps?.[0]?.instruction;
-        if (firstStep) speakResponse(firstStep);
+        if (firstStep) {
+          const voiceIntro = userLocation ? '' : 'Your location is unavailable, so directions are starting from OAU Main Gate. ';
+          speakResponse(`${voiceIntro}${firstStep}`);
+        }
       }
 
       // If final failure (no routes) for a known location, speak concise failure message
       if (suggestedLocationId && (!directionsPayload || (!directionsPayload.osrmRoute && !directionsPayload.googleRoute)) && intent === 'directions' && voiceMode) {
-        speakResponse("I couldn't load directions due to a network issue. Please check your connection and try again.");
+        const voiceFailure = userLocation
+          ? "I couldn't load directions due to a network issue. Please check your connection and try again."
+          : "Your location is unavailable, so I tried starting from OAU Main Gate, but couldn't load directions. Please check your connection and try again.";
+        speakResponse(voiceFailure);
       }
 
     } catch (error) {
